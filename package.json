@@ -1,0 +1,24 @@
+{
+  "name": "mixinable",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js | tap-spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dmbch/mixinable.git"
+  },
+  "author": "dmbch",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dmbch/mixinable/issues"
+  },
+  "homepage": "https://github.com/dmbch/mixinable#readme",
+  "devDependencies": {
+    "semistandard": "^11.0.0",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.8.0"
+  }
+}
