@@ -120,7 +120,7 @@ test('parallel test', function (t) {
 });
 
 test('async parallel test', function (t) {
-  t.plan(8);
+  t.plan(11);
   var counter = 0;
   var expectedOptions = {};
   var createFoo = mixin(
@@ -150,11 +150,19 @@ test('async parallel test', function (t) {
         }
       )
     }
-  );
+  )
+  .mixin({
+    foo: function (options) {
+      t.equal(counter, 0, '3rd is being called without waiting');
+      t.equal(options, expectedOptions, '3rd is being called with options');
+      t.ok(this instanceof createFoo, 'inheritance is set up correctly');
+      return ++counter;
+    }
+  });
   var result = createFoo().foo(expectedOptions);
   t.ok(result instanceof Promise, 'parallel\'ed method returns a promise');
   result.then(function () {
-    t.equal(counter, 2, 'promise resolves after everything else');
+    t.equal(counter, 3, 'promise resolves after everything else');
   })
   .catch(function () {
     t.fail('this is not supposed to happen');
@@ -207,12 +215,11 @@ test('pipe test', function (t) {
   });
   var foo = createFoo();
   var result = foo.foo(1, expectedOptions);
-  t.equal(result, 5,
-    'pipe\'ed method returns final value');
+  t.equal(result, 5, 'pipe\'ed method returns final value');
 });
 
 test('async pipe test', function (t) {
-  t.plan(8);
+  t.plan(11);
   var expectedOptions = {};
   var createFoo = mixin(
     {
@@ -238,11 +245,19 @@ test('async pipe test', function (t) {
         }
       )
     }
-  );
+  )
+  .mixin({
+    foo: function (value, options) {
+      t.equal(value, 3, '3rd is being passed updated value');
+      t.equal(options, expectedOptions, '3rd is being called with options');
+      t.ok(this instanceof createFoo, 'inheritance is set up correctly');
+      return this.increment(value);
+    }
+  });
   var result = createFoo().foo(1, expectedOptions);
   t.ok(result instanceof Promise, 'pipe\'ed method returns a promise');
   result.then(function (value) {
-    t.equal(value, 3, 'promise resolves to final value');
+    t.equal(value, 4, 'promise resolves to final value');
   })
   .catch(function () {
     t.fail('this is not supposed to happen');
