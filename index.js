@@ -19,6 +19,7 @@ Mixinable.mixin = function mixin () {
       parent.apply(this, arguments);
     }
   );
+  delete mixin.constructor;
   return Object.assign(child, parent, {
     __mixin__: mixin,
     __super__: parent.prototype,
