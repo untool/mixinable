@@ -45,12 +45,13 @@ test('object inheritance test', function (t) {
 // override tests
 
 test('contructor override test', function (t) {
-  t.plan(3);
+  t.plan(4);
   var expectedOptions = {};
   var Foo = mixin({
     constructor: function (options) {
       t.pass('constructor function is being called');
       t.equal(options, expectedOptions, 'options are being passed');
+      t.equal(typeof this.constructor, 'function', 'constructor method exists');
       t.ok(this instanceof Foo, 'inheritance is set up correctly');
     }
   });
@@ -59,7 +60,7 @@ test('contructor override test', function (t) {
 });
 
 test('override test', function (t) {
-  t.plan(4);
+  t.plan(6);
   var Foo = mixin({
     foo: mixin.override(function () {
       t.fail('should never be called');
@@ -71,10 +72,12 @@ test('override test', function (t) {
   var createBar = Foo.mixin({
     foo: function () {
       t.pass('explicitly overriden method is being called');
+      t.equal(typeof this.foo, 'function', 'foo method exists');
       t.ok(this instanceof createBar, 'inheritance is set up correctly');
     },
     bar: function () {
       t.pass('implicitly overriden method is being called');
+      t.equal(typeof this.bar, 'function', 'bar method exists');
       t.ok(this instanceof createBar, 'inheritance is set up correctly');
     }
   });
@@ -86,13 +89,14 @@ test('override test', function (t) {
 // parallel tests
 
 test('parallel test', function (t) {
-  t.plan(8);
+  t.plan(12);
   var expectedOptions = {};
   var createFoo = mixin(
     {
       foo: mixin.parallel(
         function (options) {
           t.equal(options, expectedOptions, '1st is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
         }
       )
@@ -101,10 +105,12 @@ test('parallel test', function (t) {
       foo: [
         function (options) {
           t.equal(options, expectedOptions, '2nd is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
         },
         function (options) {
           t.equal(options, expectedOptions, '3rd is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
         }
       ]
@@ -113,6 +119,7 @@ test('parallel test', function (t) {
   .mixin({
     foo: function (options) {
       t.equal(options, expectedOptions, '4th is being called with options');
+      t.equal(typeof this.foo, 'function', 'foo method exists');
       t.ok(this instanceof createFoo, 'inheritance is set up correctly');
     }
   });
@@ -120,7 +127,7 @@ test('parallel test', function (t) {
 });
 
 test('async parallel test', function (t) {
-  t.plan(11);
+  t.plan(15);
   var counter = 0;
   var expectedOptions = {};
   var createFoo = mixin(
@@ -129,6 +136,7 @@ test('async parallel test', function (t) {
         function (options) {
           t.equal(counter, 0, '1st is being called first');
           t.equal(options, expectedOptions, '1st is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
           return new Promise(function (resolve) {
             setTimeout(function () {
@@ -140,6 +148,7 @@ test('async parallel test', function (t) {
         function (options) {
           t.equal(counter, 0, '2nd is being called without waiting');
           t.equal(options, expectedOptions, '2nd is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
           return new Promise(function (resolve) {
             setTimeout(function () {
@@ -153,8 +162,10 @@ test('async parallel test', function (t) {
   )
   .mixin({
     foo: function (options) {
+      t.pass('sync/async methods can be mixed');
       t.equal(counter, 0, '3rd is being called without waiting');
       t.equal(options, expectedOptions, '3rd is being called with options');
+      t.equal(typeof this.foo, 'function', 'foo method exists');
       t.ok(this instanceof createFoo, 'inheritance is set up correctly');
       return ++counter;
     }
@@ -172,19 +183,17 @@ test('async parallel test', function (t) {
 // pipe tests
 
 test('pipe test', function (t) {
-  t.plan(13);
+  t.plan(17);
   var expectedOptions = {};
   var createFoo = mixin(
     {
-      increment: function (value) {
-        return ++value;
-      },
       foo: mixin.pipe(
         function (value, options) {
           t.equal(value, 1, '1st is being passed inital value');
           t.equal(options, expectedOptions, '1st is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return this.increment(value);
+          return ++value;
         }
       )
     },
@@ -193,14 +202,16 @@ test('pipe test', function (t) {
         function (value, options) {
           t.equal(value, 2, '2nd is being passed inital value');
           t.equal(options, expectedOptions, '2nd is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return this.increment(value);
+          return ++value;
         },
         function (value, options) {
           t.equal(value, 3, '3rd is being passed updated value');
           t.equal(options, expectedOptions, '3rd is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return this.increment(value);
+          return ++value;
         }
       ]
     }
@@ -209,8 +220,9 @@ test('pipe test', function (t) {
     foo: function (value, options) {
       t.equal(value, 4, '4th is being passed resulting value');
       t.equal(options, expectedOptions, '4th is being called with options');
+      t.equal(typeof this.foo, 'function', 'foo method exists');
       t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-      return this.increment(value);
+      return ++value;
     }
   });
   var foo = createFoo();
@@ -219,39 +231,40 @@ test('pipe test', function (t) {
 });
 
 test('async pipe test', function (t) {
-  t.plan(11);
+  t.plan(15);
   var expectedOptions = {};
   var createFoo = mixin(
     {
-      increment: function (value) {
-        return ++value;
-      },
       foo: mixin.pipe(
         function (value, options) {
           t.equal(value, 1, '1st is being passed inital value');
           t.equal(options, expectedOptions, '1st is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
           return new Promise(function (resolve) {
-            setTimeout(resolve.bind(null, this.increment(value)), 1);
-          }.bind(this));
+            setTimeout(resolve.bind(null, ++value), 1);
+          });
         },
         function (value, options) {
           t.equal(value, 2, '2nd is being passed updated value');
           t.equal(options, expectedOptions, '2nd is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
           return new Promise(function (resolve) {
-            setTimeout(resolve.bind(null, this.increment(value)), 1);
-          }.bind(this));
+            setTimeout(resolve.bind(null, ++value), 1);
+          });
         }
       )
     }
   )
   .mixin({
     foo: function (value, options) {
+      t.pass('sync/async methods can be mixed');
       t.equal(value, 3, '3rd is being passed updated value');
       t.equal(options, expectedOptions, '3rd is being called with options');
+      t.equal(typeof this.foo, 'function', 'foo method exists');
       t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-      return this.increment(value);
+      return ++value;
     }
   });
   var result = createFoo().foo(1, expectedOptions);
@@ -267,7 +280,7 @@ test('async pipe test', function (t) {
 // sequence tests
 
 test('sequence test', function (t) {
-  t.plan(12);
+  t.plan(16);
   var counter = 0;
   var expectedOptions = {};
   var createFoo = mixin(
@@ -276,6 +289,7 @@ test('sequence test', function (t) {
         function (options) {
           t.equal(++counter, 1, '1st is being called first');
           t.equal(options, expectedOptions, '1st is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
         }
       )
@@ -285,11 +299,13 @@ test('sequence test', function (t) {
         function (options) {
           t.equal(++counter, 2, '2nd is being called second');
           t.equal(options, expectedOptions, '2nd is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
         },
         function (options) {
           t.equal(++counter, 3, '3rd is being called third');
           t.equal(options, expectedOptions, '3rd is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
         }
       ]
@@ -299,6 +315,7 @@ test('sequence test', function (t) {
     foo: function (options) {
       t.equal(++counter, 4, '4th is being called fourth');
       t.equal(options, expectedOptions, '4th is being called with options');
+      t.equal(typeof this.foo, 'function', 'foo method exists');
       t.ok(this instanceof createFoo, 'inheritance is set up correctly');
     }
   });
@@ -306,7 +323,7 @@ test('sequence test', function (t) {
 });
 
 test('async sequence test', function (t) {
-  t.plan(8);
+  t.plan(15);
   var counter = 0;
   var expectedOptions = {};
   var createFoo = mixin(
@@ -315,6 +332,7 @@ test('async sequence test', function (t) {
         function (options) {
           t.equal(counter, 0, '1st is being called first');
           t.equal(options, expectedOptions, '1st is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
           return new Promise(function (resolve) {
             setTimeout(function () {
@@ -326,6 +344,7 @@ test('async sequence test', function (t) {
         function (options) {
           t.equal(counter, 1, '2nd is being called after waiting for first');
           t.equal(options, expectedOptions, '2nd is being called with options');
+          t.equal(typeof this.foo, 'function', 'foo method exists');
           t.ok(this instanceof createFoo, 'inheritance is set up correctly');
           return new Promise(function (resolve) {
             setTimeout(function () {
@@ -336,11 +355,21 @@ test('async sequence test', function (t) {
         }
       )
     }
-  );
+  )
+  .mixin({
+    foo: function (options) {
+      t.pass('sync/async methods can be mixed');
+      t.equal(counter, 2, '3rd is being called after waiting for first');
+      t.equal(options, expectedOptions, '3rd is being called with options');
+      t.equal(typeof this.foo, 'function', 'foo method exists');
+      t.ok(this instanceof createFoo, 'inheritance is set up correctly');
+      return ++counter;
+    }
+  });
   var result = createFoo().foo(expectedOptions);
   t.ok(result instanceof Promise, 'sequence\'ed method returns a promise');
   result.then(function () {
-    t.equal(counter, 2, 'promise resolves after everything else');
+    t.equal(counter, 3, 'promise resolves after everything else');
   })
   .catch(function () {
     t.fail('this is not supposed to happen');
