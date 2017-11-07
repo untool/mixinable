@@ -1,8 +1,7 @@
 # Mixinable
 
-<a href="https://travis-ci.org/dmbch/mixinable">
-  <img src="https://travis-ci.org/dmbch/mixinable.svg?branch=master">
-</a>
+[![travis](https://img.shields.io/travis/dmbch/mixinable.svg)](https://travis-ci.org/dmbch/mixinable)&nbsp;[![npm](https://img.shields.io/npm/v/mixinable.svg)](https://www.npmjs.com/package/mixinable)
+<br/>
 
 `mixinable` is a small utility library allowing you to use [mixins](https://addyosmani.com/resources/essentialjsdesignpatterns/book/#mixinpatternjavascript) in your code. Apart from enabling you to add and override new methods to your prototypes, it helps you apply different strategies to those additional methods.
 
@@ -28,21 +27,26 @@ yarn add mixinable
 
 The main export of `mixinable` is a variadic function accepting any number of mixin definitions. It returns a constructor/factory function that creates instances containing the mixin methods you defined.
 
-T.B.D. - to be documented
 
 #### ```mixin.replace([...implementation])```
 
-T.B.D. - to be documented
+`replace` is the default mixin method application strategy. It mimics the behavior of, for example, Backbone's [extend](http://backbonejs.org/#Model-extend) implementation. `replace` accepts any number of functions, i.e. implementations.
+
 
 #### ```mixin.parallel([...implementation])```
 
-T.B.D. - to be documented
+`parallel` executes all defined implementations in parallel. This is obviously most useful if there are asynchronous implementations involved - otherwise, it behaves identically to `sequence`.
+
 
 #### ```mixin.pipe([...implementation])```
 
-T.B.D. - to be documented
+`pipe` passes the each implementation's output to the next, using the first argument as the initial value. All other arguments are being passed to all implementations as-is.
+
 
 #### ```mixin.sequence([...implementation])```
+
+`sequence` executes all implementation sequentially, passing all arguments unchanged. Use it if your implementations might rely on others changing the instance they are run on.
+
 
 ### Examples
 
