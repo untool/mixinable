@@ -1,377 +1,261 @@
 'use strict';
 
 var test = require('tape');
-var mixin = require('./index');
-
-// basic tests
+var mixinable = require('./index');
 
 test('exports test', function (t) {
-  t.equal(typeof mixin, 'function', 'main export is a function');
-  t.equal(typeof mixin.override, 'function', 'override is a function');
-  t.equal(typeof mixin.parallel, 'function', 'parallel is a function');
-  t.equal(typeof mixin.pipe, 'function', 'pipe is a function');
-  t.equal(typeof mixin.sequence, 'function', 'sequence is a function');
+  t.equal(typeof mixinable, 'function', 'main export is a function');
+  t.equal(typeof mixinable.parallel, 'function', 'parallel is a function');
+  t.equal(typeof mixinable.pipe, 'function', 'pipe is a function');
   t.end();
 });
 
 test('basic function test', function (t) {
-  var createFoo = mixin({
-    foo: function () {}
-  });
-  t.equal(typeof createFoo, 'function', 'mixin creates a function');
-  t.equal(typeof createFoo.mixin, 'function', 'mixinable has mixin method');
-  t.equal(typeof createFoo().foo, 'function', 'instance has mixed-in method');
+  var mixin = mixinable();
+  t.equal(typeof mixin, 'function', 'mixinable creates a mixin function');
+  var create = mixin();
+  t.equal(typeof create, 'function', 'mixin creates a create function');
+  var result = create();
+  t.ok(result, 'create returns something');
   t.end();
 });
 
-test('functional inheritance test', function (t) {
-  var createFoo = mixin();
-  var createBar = createFoo.mixin();
-  var bar = createBar();
-  t.ok(bar instanceof createBar, 'instance inherits from constructor');
-  t.ok(bar instanceof createFoo, 'instance inherits from parent constructor');
-  t.end();
-});
-
-test('object inheritance test', function (t) {
-  var Foo = mixin();
-  var Bar = Foo.mixin();
-  var bar = new Bar();
-  t.ok(bar instanceof Bar, 'instance inherits from class');
-  t.ok(bar instanceof Foo, 'instance inherits from parent class');
-  t.end();
-});
-
-// override tests
-
-test('contructor override test', function (t) {
+test('constructor test', function (t) {
   t.plan(4);
-  var expectedOptions = {};
-  var Foo = mixin({
-    constructor: function (options) {
-      t.pass('constructor function is being called');
-      t.equal(options, expectedOptions, 'options are being passed');
-      t.equal(typeof this.constructor, 'function', 'constructor method exists');
-      t.ok(this instanceof Foo, 'inheritance is set up correctly');
-    }
-  });
-  var createBar = Foo.mixin();
-  createBar(expectedOptions);
-});
-
-test('override test', function (t) {
-  t.plan(6);
-  var Foo = mixin({
-    foo: mixin.override(function () {
-      t.fail('should never be called');
-    }),
-    bar: function () {
-      t.fail('should never be called');
-    }
-  });
-  var createBar = Foo.mixin({
-    foo: function () {
-      t.pass('explicitly overriden method is being called');
-      t.equal(typeof this.foo, 'function', 'foo method exists');
-      t.ok(this instanceof createBar, 'inheritance is set up correctly');
-    },
-    bar: function () {
-      t.pass('implicitly overriden method is being called');
-      t.equal(typeof this.bar, 'function', 'bar method exists');
-      t.ok(this instanceof createBar, 'inheritance is set up correctly');
-    }
-  });
-  var bar = createBar();
-  bar.foo();
-  bar.bar();
-});
-
-// parallel tests
-
-test('parallel test', function (t) {
-  t.plan(12);
-  var expectedOptions = {};
-  var createFoo = mixin(
+  var arg = 1;
+  mixinable(
     {
-      foo: mixin.parallel(
-        function (options) {
-          t.equal(options, expectedOptions, '1st is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-        }
-      )
+      constructor: function (_arg) {
+        t.equal(_arg, arg, 'facade receives correct arg');
+      }
+    }
+  )(
+    {
+      constructor: function (_arg) {
+        t.equal(_arg, arg, '1st implementation receives correct arg');
+      }
     },
     {
-      foo: [
-        function (options) {
-          t.equal(options, expectedOptions, '2nd is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-        },
-        function (options) {
-          t.equal(options, expectedOptions, '3rd is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-        }
-      ]
+      constructor: function (_arg) {
+        t.equal(_arg, arg, '2nd implementation receives correct arg');
+      }
+    },
+    {
+      constructor: function (_arg) {
+        t.equal(_arg, arg, '3rd implementation receives correct arg');
+      }
     }
-  )
-  .mixin({
-    foo: function (options) {
-      t.equal(options, expectedOptions, '4th is being called with options');
-      t.equal(typeof this.foo, 'function', 'foo method exists');
-      t.ok(this instanceof createFoo, 'inheritance is set up correctly');
+  )(arg);
+});
+
+test('sync parallel test', function (t) {
+  t.plan(9);
+  var arg = 1;
+  var ctr = 0;
+  var instance = mixinable(
+    {
+      foo: mixinable.parallel
     }
-  });
-  createFoo().foo(expectedOptions);
+  )(
+    {
+      foo: function (_arg) {
+        t.equal(_arg, arg, '1st implementation receives correct arg');
+        t.equal(ctr, 0, '1st implementation is being called first');
+        this.increment();
+      },
+      increment: function () {
+        t.pass('1st private method is being called');
+        ++ctr;
+      }
+    },
+    {
+      foo: function (_arg) {
+        t.equal(_arg, arg, '2nd implementation receives correct arg');
+        t.equal(ctr, 1, '2nd implementation is being called second');
+        this.increment();
+      },
+      increment: function () {
+        t.pass('2nd private method is being called');
+        ++ctr;
+      }
+    },
+    {
+      foo: function (_arg) {
+        t.equal(_arg, arg, '3rd implementation receives correct arg');
+        t.equal(ctr, 2, '3rd implementation is being called third');
+        this.increment();
+      },
+      increment: function () {
+        t.pass('3rd private method is being called');
+        ++ctr;
+      }
+    }
+  )();
+  instance.foo(arg);
 });
 
 test('async parallel test', function (t) {
-  t.plan(15);
-  var counter = 0;
-  var expectedOptions = {};
-  var createFoo = mixin(
+  t.plan(14);
+  var arg = 1;
+  var ctr = 0;
+  var instance = mixinable(
     {
-      foo: mixin.parallel(
-        function (options) {
-          t.equal(counter, 0, '1st is being called first');
-          t.equal(options, expectedOptions, '1st is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return new Promise(function (resolve) {
-            setTimeout(function () {
-              counter++;
-              resolve();
-            }, 1);
-          });
-        },
-        function (options) {
-          t.equal(counter, 0, '2nd is being called without waiting');
-          t.equal(options, expectedOptions, '2nd is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return new Promise(function (resolve) {
-            setTimeout(function () {
-              counter++;
-              resolve();
-            }, 1);
-          });
-        }
-      )
+      foo: mixinable.parallel
     }
-  )
-  .mixin({
-    foo: function (options) {
-      t.pass('sync/async methods can be mixed');
-      t.equal(counter, 0, '3rd is being called without waiting');
-      t.equal(options, expectedOptions, '3rd is being called with options');
-      t.equal(typeof this.foo, 'function', 'foo method exists');
-      t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-      return ++counter;
+  )(
+    {
+      foo: function (_arg) {
+        t.equal(_arg, arg, '1st implementation receives correct arg');
+        t.equal(ctr, 0, '1st implementation is being called instantaneously');
+        return new Promise(function (resolve) {
+          setTimeout(function () {
+            this.increment();
+            resolve(ctr);
+          }.bind(this), 10);
+        }.bind(this));
+      },
+      increment: function () {
+        t.pass('1st private method is being called');
+        ++ctr;
+      }
+    },
+    {
+      foo: function (_arg) {
+        t.equal(_arg, arg, '2nd implementation receives correct arg');
+        t.equal(ctr, 0, '2nd implementation is being called instantaneously');
+        return new Promise(function (resolve) {
+          setTimeout(function () {
+            this.increment();
+            resolve(ctr);
+          }.bind(this), 5);
+        }.bind(this));
+      },
+      increment: function () {
+        t.pass('2nd private method is being called');
+        ++ctr;
+      }
+    },
+    {
+      foo: function (_arg) {
+        t.equal(_arg, arg, '3rd implementation receives correct arg');
+        t.equal(ctr, 0, '3rd implementation is being called instantaneously');
+        this.increment();
+        return ctr;
+      },
+      increment: function () {
+        t.pass('3rd private method is being called');
+        ++ctr;
+      }
     }
-  });
-  var result = createFoo().foo(expectedOptions);
-  t.ok(result instanceof Promise, 'parallel\'ed method returns a promise');
-  result.then(function () {
-    t.equal(counter, 3, 'promise resolves after everything else');
-  })
-  .catch(function () {
-    t.fail('this is not supposed to happen');
+  )();
+  var result = instance.foo(arg);
+  t.ok(result instanceof Promise, 'received result is a promise');
+  result.then(function (result) {
+    t.equal(result.length, 3, 'promise resolves to array with correct length');
+    t.equal(result[0], 3, '1st result has correct value');
+    t.equal(result[1], 2, '2nd result has correct value');
+    t.equal(result[2], 1, '3rd result has correct value');
   });
 });
 
-// pipe tests
-
-test('pipe test', function (t) {
-  t.plan(17);
-  var expectedOptions = {};
-  var createFoo = mixin(
+test('sync pipe test', function (t) {
+  t.plan(10);
+  var arg = 1;
+  var instance = mixinable(
     {
-      foo: mixin.pipe(
-        function (value, options) {
-          t.equal(value, 1, '1st is being passed inital value');
-          t.equal(options, expectedOptions, '1st is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return ++value;
-        }
-      )
+      foo: mixinable.pipe
+    }
+  )(
+    {
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 0, '1st implementation receives inital value');
+        t.equal(_arg, arg, '1st implementation receives correct arg');
+        return this.increment(ctr);
+      },
+      increment: function (ctr) {
+        t.pass('1st private method is being called');
+        return ++ctr;
+      }
     },
     {
-      foo: [
-        function (value, options) {
-          t.equal(value, 2, '2nd is being passed inital value');
-          t.equal(options, expectedOptions, '2nd is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return ++value;
-        },
-        function (value, options) {
-          t.equal(value, 3, '3rd is being passed updated value');
-          t.equal(options, expectedOptions, '3rd is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return ++value;
-        }
-      ]
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 1, '2nd implementation receives 1st\'s result');
+        t.equal(_arg, arg, '2nd implementation receives correct arg');
+        return this.increment(ctr);
+      },
+      increment: function (ctr) {
+        t.pass('2nd private method is being called');
+        return ++ctr;
+      }
+    },
+    {
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 2, '3rd implementation receives 2nd\'s result');
+        t.equal(_arg, arg, '3rd implementation receives correct arg');
+        return this.increment(ctr);
+      },
+      increment: function (ctr) {
+        t.pass('3rd private method is being called');
+        return ++ctr;
+      }
     }
-  )
-  .mixin({
-    foo: function (value, options) {
-      t.equal(value, 4, '4th is being passed resulting value');
-      t.equal(options, expectedOptions, '4th is being called with options');
-      t.equal(typeof this.foo, 'function', 'foo method exists');
-      t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-      return ++value;
-    }
-  });
-  var foo = createFoo();
-  var result = foo.foo(1, expectedOptions);
-  t.equal(result, 5, 'pipe\'ed method returns final value');
+  )();
+  t.equal(instance.foo(0, arg), 3, 'correct result received');
 });
 
 test('async pipe test', function (t) {
-  t.plan(15);
-  var expectedOptions = {};
-  var createFoo = mixin(
+  t.plan(11);
+  var arg = 1;
+  var instance = mixinable(
     {
-      foo: mixin.pipe(
-        function (value, options) {
-          t.equal(value, 1, '1st is being passed inital value');
-          t.equal(options, expectedOptions, '1st is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return new Promise(function (resolve) {
-            setTimeout(resolve.bind(null, ++value), 1);
-          });
-        },
-        function (value, options) {
-          t.equal(value, 2, '2nd is being passed updated value');
-          t.equal(options, expectedOptions, '2nd is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return new Promise(function (resolve) {
-            setTimeout(resolve.bind(null, ++value), 1);
-          });
-        }
-      )
+      foo: mixinable.pipe
     }
-  )
-  .mixin({
-    foo: function (value, options) {
-      t.pass('sync/async methods can be mixed');
-      t.equal(value, 3, '3rd is being passed updated value');
-      t.equal(options, expectedOptions, '3rd is being called with options');
-      t.equal(typeof this.foo, 'function', 'foo method exists');
-      t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-      return ++value;
-    }
-  });
-  var result = createFoo().foo(1, expectedOptions);
-  t.ok(result instanceof Promise, 'pipe\'ed method returns a promise');
-  result.then(function (value) {
-    t.equal(value, 4, 'promise resolves to final value');
-  })
-  .catch(function () {
-    t.fail('this is not supposed to happen');
-  });
-});
-
-// sequence tests
-
-test('sequence test', function (t) {
-  t.plan(16);
-  var counter = 0;
-  var expectedOptions = {};
-  var createFoo = mixin(
+  )(
     {
-      foo: mixin.sequence(
-        function (options) {
-          t.equal(++counter, 1, '1st is being called first');
-          t.equal(options, expectedOptions, '1st is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-        }
-      )
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 0, '1st implementation receives inital value');
+        t.equal(_arg, arg, '1st implementation receives correct arg');
+        return new Promise(function (resolve) {
+          setTimeout(function () {
+            resolve(this.increment(ctr));
+          }.bind(this), 10);
+        }.bind(this));
+      },
+      increment: function (ctr) {
+        t.pass('1st private method is being called');
+        return ++ctr;
+      }
     },
     {
-      foo: [
-        function (options) {
-          t.equal(++counter, 2, '2nd is being called second');
-          t.equal(options, expectedOptions, '2nd is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-        },
-        function (options) {
-          t.equal(++counter, 3, '3rd is being called third');
-          t.equal(options, expectedOptions, '3rd is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-        }
-      ]
-    }
-  )
-  .mixin({
-    foo: function (options) {
-      t.equal(++counter, 4, '4th is being called fourth');
-      t.equal(options, expectedOptions, '4th is being called with options');
-      t.equal(typeof this.foo, 'function', 'foo method exists');
-      t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-    }
-  });
-  createFoo().foo(expectedOptions);
-});
-
-test('async sequence test', function (t) {
-  t.plan(15);
-  var counter = 0;
-  var expectedOptions = {};
-  var createFoo = mixin(
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 1, '2nd implementation receives 1st\'s result');
+        t.equal(_arg, arg, '2nd implementation receives correct arg');
+        return new Promise(function (resolve) {
+          setTimeout(function () {
+            resolve(this.increment(ctr));
+          }.bind(this), 5);
+        }.bind(this));
+      },
+      increment: function (ctr) {
+        t.pass('2nd private method is being called');
+        return ++ctr;
+      }
+    },
     {
-      foo: mixin.sequence(
-        function (options) {
-          t.equal(counter, 0, '1st is being called first');
-          t.equal(options, expectedOptions, '1st is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return new Promise(function (resolve) {
-            setTimeout(function () {
-              counter++;
-              resolve();
-            }, 10);
-          });
-        },
-        function (options) {
-          t.equal(counter, 1, '2nd is being called after waiting for first');
-          t.equal(options, expectedOptions, '2nd is being called with options');
-          t.equal(typeof this.foo, 'function', 'foo method exists');
-          t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-          return new Promise(function (resolve) {
-            setTimeout(function () {
-              counter++;
-              resolve();
-            }, 1);
-          });
-        }
-      )
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 2, '3rd implementation receives 2nd\'s result');
+        t.equal(_arg, arg, '3rd implementation receives correct arg');
+        return this.increment(ctr);
+      },
+      increment: function (ctr) {
+        t.pass('3rd private method is being called');
+        return ++ctr;
+      }
     }
-  )
-  .mixin({
-    foo: function (options) {
-      t.pass('sync/async methods can be mixed');
-      t.equal(counter, 2, '3rd is being called after waiting for first');
-      t.equal(options, expectedOptions, '3rd is being called with options');
-      t.equal(typeof this.foo, 'function', 'foo method exists');
-      t.ok(this instanceof createFoo, 'inheritance is set up correctly');
-      return ++counter;
-    }
-  });
-  var result = createFoo().foo(expectedOptions);
-  t.ok(result instanceof Promise, 'sequence\'ed method returns a promise');
-  result.then(function () {
-    t.equal(counter, 3, 'promise resolves after everything else');
-  })
-  .catch(function () {
-    t.fail('this is not supposed to happen');
+  )();
+  var result = instance.foo(0, arg);
+  t.ok(result instanceof Promise, 'received result is a promise');
+  result.then(function (result) {
+    t.equal(result, 3, 'promise resolves to correct value');
   });
 });
