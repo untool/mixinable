@@ -25,20 +25,24 @@ module.exports = exports = function define (definition) {
       var mixinstances = mixins.map(function (mixin) {
         return new (mixin.bind.apply(mixin, [mixin].concat(args)))();
       });
-      return Object.defineProperty(
+      return Object.defineProperties(
         new (mixinable.bind.apply(mixinable, [mixinable].concat(args)))(),
-        '__implementations__',
         {
-          value: keys.reduce(function (result, key) {
-            result[key] = mixinstances
-              .filter(function (mixinstance) {
-                return isFunction(mixinstance[key]);
-              })
-              .map(function (mixinstance) {
-                return mixinstance[key].bind(mixinstance);
-              });
-            return result;
-          }, {})
+          clone: {
+            value: create.bind.apply(create, [create].concat(args))
+          },
+          __implementations__: {
+            value: keys.reduce(function (result, key) {
+              result[key] = mixinstances
+                .filter(function (mixinstance) {
+                  return isFunction(mixinstance[key]);
+                })
+                .map(function (mixinstance) {
+                  return mixinstance[key].bind(mixinstance);
+                });
+              return result;
+            }, {})
+          }
         }
       );
     };
