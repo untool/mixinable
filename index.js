@@ -28,7 +28,7 @@ module.exports = exports = function define (definition) {
       return Object.defineProperties(
         new (mixinable.bind.apply(mixinable, [mixinable].concat(args)))(),
         {
-          clone: {
+          __clone__: {
             value: create.bind.apply(create, [create].concat(args))
           },
           __implementations__: {
