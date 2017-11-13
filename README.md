@@ -3,9 +3,12 @@
 [![travis](https://img.shields.io/travis/dmbch/mixinable.svg)](https://travis-ci.org/dmbch/mixinable)&nbsp;[![npm](https://img.shields.io/npm/v/mixinable.svg)](https://www.npmjs.com/package/mixinable)
 <br/>
 
-`mixinable` is a small utility library allowing you to use [mixins](https://addyosmani.com/resources/essentialjsdesignpatterns/book/#mixinpatternjavascript) in your code. Apart from enabling you to add and override new methods to your prototypes, it helps you apply different strategies to those additional methods.
+`mixinable` is a small functional utility library allowing you to use [mixins](https://addyosmani.com/resources/essentialjsdesignpatterns/book/#mixinpatternjavascript) in your code. More specifically, it allows you to create mixin containers that apply mixin method application strategies to mixin method implementations.
 
-`mixinable` keeps your protoype chain intact (`instanceof` works as expected), allows you to provide custom `constructor` functions and supports asynchronous methods returning `Promises`.
+Mixins are plain Objects (or hashes) that can easily be shared, modified and extended using standard language features such as [spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_operator#Spread_in_object_literals) or [`Object.assign()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign).
+
+`mixinable` allows you to provide custom [`constructor`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/constructor) functions and supports asynchronous methods returning [`Promises`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promises). It is built in a functional way, allowing you to, for example, apply [`fn.bind()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind).
+
 
 ### Installation
 
@@ -21,152 +24,171 @@ Using [Yarn](https://yarnpkg.com/en/):
 yarn add mixinable
 ```
 
+To be able to use `mixinable`, you will have to make sure your environment supports [`Promise`](https://kangax.github.io/compat-table/es6/#test-Promise) and [`Object.assign()`/`Object.keys()`](https://kangax.github.io/compat-table/es6/#test-Object_static_methods): if you need to support IE11, you will have to [polyfill](https://polyfill.io/v2/docs/) those features.
+
+
 ### API
 
-#### ```mixin([...definition])```
+#### ```define(definition)```
 
-The main export of `mixinable` is a variadic function accepting any number of mixin definitions. It returns a constructor/factory function that creates instances containing the mixin methods you defined.
+The main export of `mixinable` is a `define()` function accepting a mixin container definition. This definition hash is made up of `strategy` functions prescribing how to handle different mixin methods you provide.
 
+It returns a variadic `mixin()` function that accepts the mixin definitions you want to apply and returns a `create()` function. Mixin definitions are hashes containing mixin method implementations that are being applied using the aforementioned strategies.
 
-#### ```mixin.replace([...implementation])```
+And that `create()` function accepts whatever arguments the `constructor()`s of your mixin container and your mixins accept. 
 
-`replace` is the default mixin method application strategy. It mimics the behavior of, for example, Backbone's [extend](http://backbonejs.org/#Model-extend) implementation. `replace` accepts any number of functions, i.e. implementations.
-
-
-#### ```mixin.parallel([...implementation])```
-
-`parallel` executes all defined implementations in parallel. This is obviously most useful if there are asynchronous implementations involved - otherwise, it behaves identically to `sequence`.
-
-
-#### ```mixin.pipe([...implementation])```
-
-`pipe` passes the each implementation's output to the next, using the first argument as the initial value. All other arguments are being passed to all implementations as-is.
-
-
-#### ```mixin.sequence([...implementation])```
-
-`sequence` executes all implementation sequentially, passing all arguments unchanged. Use it if your implementations might rely on others changing the instance they are run on.
-
-
-### Examples
-
-##### Basic Example
+##### Example
 
 ```javascript
-import mixin from 'mixinable';
+import define from 'mixinable';
 
-// const Foo = mixin({
-const createFoo = mixin({
-  bar() {
-    // ...
+const mixin = define({
+  // mixin strategy function
+  bar (functions, arg) {
+    return functions.pop()(arg);
   }
 });
 
-// const foo = new Foo();
-const foo = createFoo();
+const create = mixin({
+  // mixin implementation
+  bar (arg) {
+    console.log(arg);
+  }
+});
 
-// console.log(foo instanceof Foo);
-console.log(foo instanceof createFoo);
+const foo = create();
+
+foo.bar('yeah!');
+// yeah!
 ```
 
-##### Multiple Mixins Example
+Speaking of which: `mixinable` creates a separate hidden mixin instance for every mixin you provide. When used inside a mixin method, `this` refers to this hidden instance.
+
+Mixin methods not included in your definition are only accessible from within the mixin instance itself, but not from the outside.
+
+##### Example
 
 ```javascript
-import mixin from 'mixinable';
+import define from 'mixinable';
 
-// multiple mixin arguments are being merged
-const createFoo = mixin(
+const mixin = define({
+  bar (functions, arg) {
+    return functions.pop()(arg);
+  }
+});
+
+const create = mixin({
+  // mixin implementation
+  bar (arg) {
+    this.qux(arg);
+  },
+  // private mixin method
+  qux (arg) {
+    console.log(arg);
+  }
+});
+
+const foo = create();
+
+foo.bar('yeah!');
+// yeah!
+
+console.log(typeof foo.bar, typeof foo.qux);
+// function undefined
+```
+
+Both mixin container and mixin definitions can contain custom constructors. These functions are being passed the `create()` function's arguments upon creation.
+
+```javascript
+import define from 'mixinable';
+
+const mixin = define({
+  // mixin container contructor
+  constructor: function (arg) {
+    console.log(arg);
+  }
+});
+
+const create = mixin({
+  // mixin contructor
+  constructor: function (arg) {
+    console.log(arg);
+  }
+});
+
+create('yee-hah!');
+// yee-hah!
+// yee-hah!
+```
+
+
+#### ```define.parallel```
+
+`parallel` is a helper implementating a mixin strategy that executes all defined implementations in parallel. This is probably most useful if asynchronous implementations are involved.
+
+##### Example
+
+```javascript
+import define, { parallel } from 'mixinable';
+
+const mixin = define({
+  // mixin strategy function
+  bar: parallel
+});
+
+const create = mixin(
   {
-    bar() {
-      // ...
+    bar (val, inc) {
+      return Promise.resolve(val + inc);
     }
   },
   {
-    // you can pass multiple implementations at once
-    baz: [
-      function () { /* ... */ },
-      function () { /* ... */ }
-    ]
+    bar (val, inc) {
+      return val + inc;
+    }
   }
 );
 
-// constructors/factories created with mixin can be extended
-const createQux = createFoo.mixin({
-  bar() {
-    // ...
-  }
-});
+const foo = create();
+
+foo.bar(0, 1).then(res => console.log(res));
+// [1, 1]
 ```
 
-##### `parallel` Example
+
+#### ```define.pipe```
+
+`pipe` is a helper implementating a strategy that passes each implementation's output to the next, using the first argument as the initial value. All other arguments are being passed to all implementations as-is.
+
+##### Example
 
 ```javascript
-import mixin, { parallel } from 'mixinable';
+import define, { pipe } from 'mixinable';
 
-// const Foo = mixin({
-const createFoo = mixin({
-  bar: parallel(
-    function () {
-      return Promise.resolve(1);
-    },
-    function () {
-      return Promise.resolve(2);
-    }
-  )
+const mixin = define({
+  // mixin strategy function
+  bar: pipe
 });
 
-const foo = createFoo();
-
-foo.bar().then(res => console.log(res));
-// [1, 2]
-```
-
-##### `pipe` Example
-
-```javascript
-import mixin, { pipe } from 'mixinable';
-
-// const Foo = mixin({
-const createFoo = mixin({
-  bar: pipe(
-    function (val, inc) {
+const create = mixin(
+  {
+    bar (val, inc) {
       return Promise.resolve(val + inc);
-    },
-    function (val, inc) {
+    }
+  },
+  {
+    bar (val, inc) {
       return (val + inc);
     }
-  )
-});
+  }
+);
 
-const foo = createFoo();
+const foo = create();
 
 foo.bar(0, 1).then(res => console.log(res));
 // 2
 ```
 
-##### `sequence` Example
-
-```javascript
-import mixin, { sequence } from 'mixinable';
-
-// const Foo = mixin({
-const createFoo = mixin({
-  bar: sequence(
-    function (options) {
-      this.baz = options.baz;
-    },
-    function (options) {
-      this.qux = this.bar * 42;
-    }
-  )
-});
-
-const foo = createFoo();
-
-foo.bar({ baz: 23 });
-console.log(foo.qux);
-// '966'
-```
 
 ### Contributing
 
@@ -179,4 +201,4 @@ git clone git@github.com:user/mixinable.git
 
 Afterwards, you can `yarn install` the required dev dependencies and start hacking away. When you are finished, please do go ahead and create a pull request.
 
-`mixinable` is entirely written in ECMAScript 5 and adheres to semistandard code style. Please make sure your contribution does, too.
+`mixinable` itself is almost entirely written in ECMAScript 5 and adheres to semistandard code style. Please make sure your contribution does, too.
