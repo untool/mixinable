@@ -32,7 +32,7 @@ test('clone function test', function (t) {
   var instance = create(arg1);
   t.equal(instance.bar, arg1, 'instance has expected 1st property');
   t.equal(instance.baz, undefined, 'instance does not have 2nd property');
-  var clone = instance.clone(arg2);
+  var clone = instance.__clone__(arg2);
   t.equal(clone.bar, arg1, 'clone has expected 1st property');
   t.equal(clone.baz, arg2, 'clone has expected 2nd property');
   t.end();
