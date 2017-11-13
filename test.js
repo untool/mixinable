@@ -20,7 +20,25 @@ test('basic function test', function (t) {
   t.end();
 });
 
-test('constructor test', function (t) {
+test('clone function test', function (t) {
+  var arg1 = 1;
+  var arg2 = 2;
+  var create = mixinable({
+    constructor: function (bar, baz) {
+      this.bar = bar;
+      this.baz = baz;
+    }
+  })();
+  var instance = create(arg1);
+  t.equal(instance.bar, arg1, 'instance has expected 1st property');
+  t.equal(instance.baz, undefined, 'instance does not have 2nd property');
+  var clone = instance.clone(arg2);
+  t.equal(clone.bar, arg1, 'clone has expected 1st property');
+  t.equal(clone.baz, arg2, 'clone has expected 2nd property');
+  t.end();
+});
+
+test('constructor support test', function (t) {
   t.plan(4);
   var arg = 1;
   mixinable(
@@ -48,7 +66,7 @@ test('constructor test', function (t) {
   )(arg);
 });
 
-test('sync parallel test', function (t) {
+test('sync parallel helper test', function (t) {
   t.plan(9);
   var arg = 1;
   var ctr = 0;
@@ -94,7 +112,7 @@ test('sync parallel test', function (t) {
   instance.foo(arg);
 });
 
-test('async parallel test', function (t) {
+test('async parallel helper test', function (t) {
   t.plan(14);
   var arg = 1;
   var ctr = 0;
@@ -158,7 +176,7 @@ test('async parallel test', function (t) {
   });
 });
 
-test('sync pipe test', function (t) {
+test('sync pipe helper test', function (t) {
   t.plan(10);
   var arg = 1;
   var instance = mixinable(
@@ -203,7 +221,7 @@ test('sync pipe test', function (t) {
   t.equal(instance.foo(0, arg), 3, 'correct result received');
 });
 
-test('async pipe test', function (t) {
+test('async pipe helper test', function (t) {
   t.plan(11);
   var arg = 1;
   var instance = mixinable(
