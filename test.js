@@ -1,21 +1,25 @@
 'use strict';
 
 var test = require('tape');
-var mixinable = require('./index');
+var define = require('./index');
 
 test('exports test', function (t) {
-  t.equal(typeof mixinable, 'function', 'main export is a function');
-  t.equal(typeof mixinable.parallel, 'function', 'parallel is a function');
-  t.equal(typeof mixinable.pipe, 'function', 'pipe is a function');
+  t.equal(typeof define, 'function', 'main export is a function');
+  t.equal(typeof define.parallel, 'function', 'parallel is a function');
+  t.equal(typeof define.pipe, 'function', 'pipe is a function');
   t.end();
 });
 
 test('basic function test', function (t) {
-  var mixin = mixinable();
-  t.equal(typeof mixin, 'function', 'mixinable creates a mixin function');
-  var create = mixin();
-  t.equal(typeof create, 'function', 'mixin creates a create function');
-  var result = create();
+  var mixin = define();
+  t.equal(typeof mixin, 'function', 'define creates a mixin function');
+  var create1 = mixin();
+  t.equal(typeof create1, 'function', 'mixin creates a create function');
+  t.equal(typeof create1.mixin, 'function', 'create contains mixin function');
+  var create2 = create1.mixin();
+  t.equal(typeof create2, 'function', 'create.mixin creates a create function');
+  t.equal(typeof create2.mixin, 'function', 'create contains mixin function');
+  var result = create2();
   t.ok(result, 'create returns something');
   t.end();
 });
@@ -23,7 +27,7 @@ test('basic function test', function (t) {
 test('clone function test', function (t) {
   var arg1 = 1;
   var arg2 = 2;
-  var create = mixinable({
+  var create = define({
     constructor: function (bar, baz) {
       this.bar = bar;
       this.baz = baz;
@@ -32,7 +36,7 @@ test('clone function test', function (t) {
   var instance = create(arg1);
   t.equal(instance.bar, arg1, 'instance has expected 1st property');
   t.equal(instance.baz, undefined, 'instance does not have 2nd property');
-  var clone = instance.__clone__(arg2);
+  var clone = instance.clone(arg2);
   t.equal(clone.bar, arg1, 'clone has expected 1st property');
   t.equal(clone.baz, arg2, 'clone has expected 2nd property');
   t.end();
@@ -41,7 +45,7 @@ test('clone function test', function (t) {
 test('constructor support test', function (t) {
   t.plan(4);
   var arg = 1;
-  mixinable(
+  define(
     {
       constructor: function (_arg) {
         t.equal(_arg, arg, 'facade receives correct arg');
@@ -70,9 +74,9 @@ test('sync parallel helper test', function (t) {
   t.plan(9);
   var arg = 1;
   var ctr = 0;
-  var instance = mixinable(
+  var instance = define(
     {
-      foo: mixinable.parallel
+      foo: define.parallel
     }
   )(
     {
@@ -116,9 +120,9 @@ test('async parallel helper test', function (t) {
   t.plan(14);
   var arg = 1;
   var ctr = 0;
-  var instance = mixinable(
+  var instance = define(
     {
-      foo: mixinable.parallel
+      foo: define.parallel
     }
   )(
     {
@@ -179,9 +183,9 @@ test('async parallel helper test', function (t) {
 test('sync pipe helper test', function (t) {
   t.plan(10);
   var arg = 1;
-  var instance = mixinable(
+  var instance = define(
     {
-      foo: mixinable.pipe
+      foo: define.pipe
     }
   )(
     {
@@ -224,9 +228,9 @@ test('sync pipe helper test', function (t) {
 test('async pipe helper test', function (t) {
   t.plan(11);
   var arg = 1;
-  var instance = mixinable(
+  var instance = define(
     {
-      foo: mixinable.pipe
+      foo: define.pipe
     }
   )(
     {
