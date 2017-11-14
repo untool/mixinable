@@ -1,51 +1,35 @@
 'use strict';
 
 module.exports = exports = function define (definition) {
-  var keys = Object.keys(definition || {}).filter(function (key) {
-    return isFunction(definition[key]);
-  });
-  var mixinable = createClass(
-    keys.reduce(function (result, key) {
-      if (key === 'constructor') {
-        result[key] = definition[key];
-      } else {
-        result[key] = function () {
-          var args = argsToArray.apply(null, arguments);
-          var functions = this.__implementations__[key];
-          return definition[key].apply(this, [functions].concat(args));
-        };
-      }
-      return result;
-    }, {})
-  );
+  var methodNames = getMethodNames(definition);
+  var mixinable = createMixinable(definition, methodNames);
   return function mixin () {
-    var mixins = argsToArray.apply(null, arguments).map(createClass);
-    return function create () {
-      var args = argsToArray.apply(null, arguments);
-      var mixinstances = mixins.map(function (mixin) {
-        return new (mixin.bind.apply(mixin, [mixin].concat(args)))();
-      });
-      return Object.defineProperties(
-        new (mixinable.bind.apply(mixinable, [mixinable].concat(args)))(),
-        {
-          __clone__: {
-            value: create.bind.apply(create, [create].concat(args))
-          },
-          __implementations__: {
-            value: keys.reduce(function (result, key) {
-              result[key] = mixinstances
-                .filter(function (mixinstance) {
-                  return isFunction(mixinstance[key]);
-                })
-                .map(function (mixinstance) {
-                  return mixinstance[key].bind(mixinstance);
-                });
-              return result;
-            }, {})
+    var definitions = argsToArray.apply(null, arguments);
+    var mixins = definitions.map(createClass);
+    return Object.defineProperties(
+      function create () {
+        var args = argsToArray.apply(null, arguments);
+        var mixinstances = mixins.map(function (mixin) {
+          return new (mixin.bind.apply(mixin, [mixin].concat(args)))();
+        });
+        return Object.defineProperties(
+          new (mixinable.bind.apply(mixinable, [mixinable].concat(args)))(),
+          {
+            __implementations__: {
+              value: getImplementations(mixinstances, methodNames)
+            },
+            clone: {
+              value: create.bind.apply(create, [create].concat(args))
+            }
           }
+        );
+      },
+      {
+        mixin: {
+          value: mixin.bind.apply(mixin, [mixin].concat(definitions))
         }
-      );
-    };
+      }
+    );
   };
 };
 
@@ -76,8 +60,24 @@ exports.pipe = function pipe (functions) {
   );
 };
 
-function createClass (_prototype) {
-  var prototype = Object.assign({}, _prototype);
+function createMixinable (definition, methodNames) {
+  return createClass(
+    methodNames.reduce(function (result, methodName) {
+      if (methodName === 'constructor') {
+        result[methodName] = definition[methodName];
+      } else {
+        result[methodName] = function () {
+          var args = argsToArray.apply(null, arguments);
+          var functions = this.__implementations__[methodName];
+          return definition[methodName].apply(this, [functions].concat(args));
+        };
+      }
+      return result;
+    }, {})
+  );
+}
+
+function createClass (prototype) {
   var constructor = function () {};
   if (prototype.hasOwnProperty('constructor')) {
     constructor = prototype.constructor;
@@ -86,6 +86,26 @@ function createClass (_prototype) {
   }
   constructor.prototype = prototype;
   return constructor;
+}
+
+function getMethodNames (definition) {
+  return Object.keys(definition || {})
+    .filter(function (methodName) {
+      return isFunction(definition[methodName]);
+    });
+}
+
+function getImplementations (mixinstances, methodNames) {
+  return methodNames.reduce(function (result, methodName) {
+    result[methodName] = mixinstances
+      .filter(function (mixinstance) {
+        return isFunction(mixinstance[methodName]);
+      })
+      .map(function (mixinstance) {
+        return mixinstance[methodName].bind(mixinstance);
+      });
+    return result;
+  }, {});
 }
 
 function argsToArray () {
