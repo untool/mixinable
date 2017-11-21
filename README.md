@@ -78,7 +78,7 @@ const mixin = define({
 });
 
 const create = mixin({
-  // mixin implementation
+  // mixin method implementations
   bar (arg) {
     this.qux(arg);
   },
@@ -98,6 +98,8 @@ console.log(typeof foo.bar, typeof foo.qux);
 ```
 
 Both mixin container and mixin definitions can contain custom constructors. These functions are being passed the `create()` function's arguments upon creation.
+
+##### Example
 
 ```javascript
 import define from 'mixinable';
@@ -122,6 +124,41 @@ create('yee-hah!');
 ```
 
 
+#### ```define.override```
+
+`override` is a helper implementating a mixin strategy that resembles classical inherintance (`class ... extends`): it simply calls the last method implementation.
+
+##### Example
+
+```javascript
+import define, { override } from 'mixinable';
+
+const mixin = define({
+  // mixin strategy function
+  bar: override
+});
+
+const create = mixin(
+  // mixin method implementations
+  {
+    bar () {
+      console.log(1);
+    }
+  },
+  {
+    bar () {
+      console.log(2);
+    }
+  }
+);
+
+const foo = create();
+
+foo.bar();
+// 2
+```
+
+
 #### ```define.parallel```
 
 `parallel` is a helper implementating a mixin strategy that executes all defined implementations in parallel. This is probably most useful if asynchronous implementations are involved.
@@ -137,6 +174,7 @@ const mixin = define({
 });
 
 const create = mixin(
+  // mixin method implementations
   {
     bar (val, inc) {
       return Promise.resolve(val + inc);
@@ -171,6 +209,7 @@ const mixin = define({
 });
 
 const create = mixin(
+  // mixin method implementations
   {
     bar (val, inc) {
       return Promise.resolve(val + inc);
@@ -187,6 +226,36 @@ const foo = create();
 
 foo.bar(0, 1).then(res => console.log(res));
 // 2
+```
+
+
+#### Custom Strategies
+
+You can supply your own mixin strategies: such strategies are plain functions that receive the defined implementations as their first argument. The following example shows a naïve re-implementation of the ```override``` strategy.
+
+##### Example
+
+```javascript
+import define from 'mixinable';
+
+const mixin = define({
+  // mixin strategy function
+  bar (functions, ...args) {
+    functions.pop().apply(null, args);
+  }
+});
+
+const create = mixin({
+  // mixin method implementation
+  bar (arg) {
+    console.log(arg);
+  }
+});
+
+const foo = create();
+
+foo.bar(1);
+// 1
 ```
 
 
