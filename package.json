@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node test.js | tap-spec",
     "release": "standard-version",
-    "postrelease": "git push --follow-tags; npm publish"
+    "postrelease": "git push --follow-tags; npm publish --registry https://registry.npmjs.org/"
   },
   "repository": {
     "type": "git",
