@@ -228,6 +228,23 @@ foo.bar(0, 1).then(res => console.log(res));
 // 2
 ```
 
+#### ```define.compose```
+
+`compose` works essentially identically as `pipe`, but in reverse order: the very last implementation receives the initial value and the first implementation returns the final output.
+
+##### Example
+
+```javascript
+import define, { compose } from 'mixinable';
+
+const mixin = define({
+  // mixin strategy function
+  bar: compose
+});
+
+// ...
+```
+
 
 #### Custom Strategies
 
