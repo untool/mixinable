@@ -68,6 +68,53 @@ test('constructor support test', function (t) {
   )(arg);
 });
 
+test('inheritance test', function (t) {
+  t.plan(15);
+  var arg = 1;
+  function Strategy (_arg) {
+    t.pass('strategy constructor is being called');
+    t.equal(_arg, arg, 'strategy constructor receives correct arg');
+    t.ok(this instanceof Strategy, 'strategy inherits correctly');
+    t.ok(
+      Strategy.prototype.isPrototypeOf(this),
+      'strategy prototype chain is set up'
+    );
+  }
+  Strategy.prototype = {
+    foo: function (functions, _arg) {
+      t.equal(_arg, arg, 'strategy definition receives correct arg');
+      t.ok(this instanceof Strategy, 'strategy inherits correctly');
+      t.ok(
+        Strategy.prototype.isPrototypeOf(this),
+        'strategy prototype chain is set up'
+      );
+      functions.forEach(function (fn) { fn(_arg); });
+    }
+  };
+  function Implementation (_arg) {
+    t.pass('implementation constructor is being called');
+    t.equal(_arg, arg, 'implementation constructor receives correct arg');
+    t.ok(this instanceof Implementation, 'implementation inherits correctly');
+    t.ok(
+      Implementation.prototype.isPrototypeOf(this),
+      'implementation prototype chain is set up'
+    );
+  }
+  Implementation.prototype = {
+    foo: function (_arg) {
+      t.pass('implementation is being called');
+      t.equal(_arg, arg, 'implementation receives correct arg');
+      t.ok(this instanceof Implementation, 'implementation inherits correctly');
+      t.ok(
+        Implementation.prototype.isPrototypeOf(this),
+        'implementation prototype chain is set up'
+      );
+    }
+  };
+  var instance = mixinable(Strategy)(Implementation)(arg);
+  instance.foo(arg);
+});
+
 test('override helper test', function (t) {
   t.plan(2);
   var arg = 1;
