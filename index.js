@@ -60,6 +60,12 @@ exports.pipe = function pipe (functions) {
   );
 };
 
+exports.compose = function compose (_functions) {
+  var args = argsToArray(arguments).slice(1);
+  var functions = [].concat(_functions).reverse();
+  return exports.pipe.apply(null, [functions].concat(args));
+};
+
 exports.clone = function clone (instance) {
   var args = argsToArray(arguments).slice(1);
   if (instance && isFunction(instance.__clone__)) {
