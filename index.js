@@ -1,29 +1,30 @@
 'use strict';
 
 module.exports = exports = function define (definition) {
-  var methodNames = getMethodNames(definition);
-  var mixinable = createMixinable(definition, methodNames);
+  var mixinable = createMixinable(definition);
   return function mixin () {
-    var mixins = argsToArray(arguments).map(createClass);
+    var mixins = argsToArray(arguments).map(createMixin);
     return function create () {
       var args = argsToArray(arguments);
       var mixinstances = mixins.map(function (mixin) {
-        return new (mixin.bind.apply(mixin, [mixin].concat(args)))();
+        return new (bindArgs(mixin, args))();
       });
       return Object.defineProperties(
-        new (mixinable.bind.apply(mixinable, [mixinable].concat(args)))(),
+        new (bindArgs(mixinable, args))(),
         {
           __implementations__: {
-            value: getImplementations(mixinstances, methodNames)
+            value: getImplementations(mixinable, mixinstances)
           },
           __clone__: {
-            value: create.bind.apply(create, [create].concat(args))
+            value: bindArgs(create, args)
           }
         }
       );
     };
   };
 };
+
+// strategy exports
 
 exports.override = function override (functions) {
   var args = argsToArray(arguments).slice(1);
@@ -66,6 +67,8 @@ exports.compose = function compose (_functions) {
   return exports.pipe.apply(null, [functions].concat(args));
 };
 
+// utility exports
+
 exports.clone = function clone (instance) {
   var args = argsToArray(arguments).slice(1);
   if (instance && isFunction(instance.__clone__)) {
@@ -73,35 +76,42 @@ exports.clone = function clone (instance) {
   }
 };
 
-function createMixinable (definition, methodNames) {
-  return createClass(
-    methodNames.reduce(function (result, methodName) {
-      if (methodName === 'constructor') {
-        result[methodName] = definition[methodName];
-      } else {
-        result[methodName] = function () {
+// classy helpers
+
+function createMixinable (definition) {
+  var prototype = getPrototype(definition);
+  return Object.assign(function Mixinable () {
+    getConstructor(definition).apply(this, arguments);
+  }, {
+    prototype: Object.assign(
+      Object.create(prototype),
+      Object.keys(prototype).reduce(function (result, key) {
+        result[key] = function () {
           var args = argsToArray(arguments);
-          var functions = this.__implementations__[methodName];
-          return definition[methodName].apply(null, [functions].concat(args));
+          var functions = this.__implementations__[key];
+          var strategy = prototype[key];
+          return strategy.apply(this, [functions].concat(args));
         };
-      }
-      return result;
-    }, {})
-  );
+        return result;
+      }, {})
+    )
+  });
 }
 
-function createClass (prototype) {
-  var constructor = function () {};
-  if (prototype.hasOwnProperty('constructor')) {
-    constructor = prototype.constructor;
+function createMixin (definition) {
+  if (isFunction(definition)) {
+    return definition;
   } else {
-    prototype.constructor = constructor;
+    return Object.assign(function Mixin () {
+      getConstructor(definition).apply(this, arguments);
+    }, {
+      prototype: getPrototype(definition)
+    });
   }
-  constructor.prototype = prototype;
-  return constructor;
 }
 
-function getImplementations (mixinstances, methodNames) {
+function getImplementations (mixinable, mixinstances) {
+  var methodNames = Object.keys(mixinable.prototype);
   return methodNames.reduce(function (result, methodName) {
     result[methodName] = mixinstances
       .filter(function (mixinstance) {
@@ -114,12 +124,7 @@ function getImplementations (mixinstances, methodNames) {
   }, {});
 }
 
-function getMethodNames (definition) {
-  return Object.keys(definition || {})
-    .filter(function (methodName) {
-      return isFunction(definition[methodName]);
-    });
-}
+// utilities
 
 var argsToArray = Function.prototype.apply.bind(
   function argsToArray () {
@@ -131,6 +136,18 @@ var argsToArray = Function.prototype.apply.bind(
   },
   null
 );
+
+function bindArgs (fn, args) {
+  return Function.prototype.bind.apply(fn, [fn].concat(args));
+}
+
+function getConstructor (def) {
+  return (def && ((isFunction(def)) ? def : def.constructor)) || function () {};
+}
+
+function getPrototype (def) {
+  return (def && ((isFunction(def)) ? def.prototype : def)) || {};
+}
 
 function isFunction (obj) {
   return typeof obj === 'function';
