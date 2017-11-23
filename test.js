@@ -307,3 +307,105 @@ test('async pipe helper test', function (t) {
     t.equal(result, 3, 'promise resolves to correct value');
   });
 });
+
+test('sync compose helper test', function (t) {
+  t.plan(10);
+  var arg = 1;
+  var instance = mixinable(
+    {
+      foo: mixinable.compose
+    }
+  )(
+    {
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 2, '1st implementation receives 2nd\'s result');
+        t.equal(_arg, arg, '1st implementation receives correct arg');
+        return this.increment(ctr);
+      },
+      increment: function (ctr) {
+        t.pass('1st private method is being called');
+        return ++ctr;
+      }
+    },
+    {
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 1, '2nd implementation receives 1st\'s result');
+        t.equal(_arg, arg, '2nd implementation receives correct arg');
+        return this.increment(ctr);
+      },
+      increment: function (ctr) {
+        t.pass('2nd private method is being called');
+        return ++ctr;
+      }
+    },
+    {
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 0, '3rd implementation receives inital value');
+        t.equal(_arg, arg, '3rd implementation receives correct arg');
+        return this.increment(ctr);
+      },
+      increment: function (ctr) {
+        t.pass('3rd private method is being called');
+        return ++ctr;
+      }
+    }
+  )();
+  t.equal(instance.foo(0, arg), 3, 'correct result received');
+});
+
+test('async compose helper test', function (t) {
+  t.plan(11);
+  var arg = 1;
+  var instance = mixinable(
+    {
+      foo: mixinable.compose
+    }
+  )(
+    {
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 2, '1st implementation receives 2nd\'s result');
+        t.equal(_arg, arg, '1st implementation receives correct arg');
+        return this.increment(ctr);
+      },
+      increment: function (ctr) {
+        t.pass('1st private method is being called');
+        return ++ctr;
+      }
+    },
+    {
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 1, '2nd implementation receives 1st\'s result');
+        t.equal(_arg, arg, '2nd implementation receives correct arg');
+        return new Promise(function (resolve) {
+          setTimeout(function () {
+            resolve(this.increment(ctr));
+          }.bind(this), 5);
+        }.bind(this));
+      },
+      increment: function (ctr) {
+        t.pass('2nd private method is being called');
+        return ++ctr;
+      }
+    },
+    {
+      foo: function (ctr, _arg) {
+        t.equal(ctr, 0, '3rd implementation receives inital value');
+        t.equal(_arg, arg, '3rd implementation receives correct arg');
+        return new Promise(function (resolve) {
+          setTimeout(function () {
+            resolve(this.increment(ctr));
+          }.bind(this), 10);
+        }.bind(this));
+      },
+      increment: function (ctr) {
+        t.pass('3rd private method is being called');
+        return ++ctr;
+      }
+    }
+  )();
+  var result = instance.foo(0, arg);
+  t.ok(result instanceof Promise, 'received result is a promise');
+  result.then(function (result) {
+    t.equal(result, 3, 'promise resolves to correct value');
+  });
+});
