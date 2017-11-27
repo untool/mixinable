@@ -67,6 +67,21 @@ exports.compose = function compose (_functions) {
 
 // utility exports
 
+exports.async = {
+  override: function () {
+    return Promise.resolve(exports.override.apply(null, arguments));
+  },
+  parallel: function () {
+    return Promise.resolve(exports.parallel.apply(null, arguments));
+  },
+  pipe: function () {
+    return Promise.resolve(exports.pipe.apply(null, arguments));
+  },
+  compose: function () {
+    return Promise.resolve(exports.compose.apply(null, arguments));
+  }
+};
+
 exports.clone = function clone (instance) {
   var args = argsToArray(arguments).slice(1);
   if (instance && isFunction(instance.__clone__)) {
