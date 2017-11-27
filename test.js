@@ -3,12 +3,19 @@
 var test = require('tape');
 var mixinable = require('./index');
 
+var async = mixinable.async;
+
 test('exports test', function (t) {
   t.equal(typeof mixinable, 'function', 'main export is a function');
   t.equal(typeof mixinable.clone, 'function', 'clone is a function');
   t.equal(typeof mixinable.override, 'function', 'override is a function');
   t.equal(typeof mixinable.parallel, 'function', 'parallel is a function');
   t.equal(typeof mixinable.pipe, 'function', 'pipe is a function');
+  t.equal(typeof mixinable.compose, 'function', 'compose is a function');
+  t.equal(typeof async.override, 'function', 'async.override is a function');
+  t.equal(typeof async.parallel, 'function', 'async.parallel is a function');
+  t.equal(typeof async.pipe, 'function', 'async.pipe is a function');
+  t.equal(typeof async.compose, 'function', 'async.compose is a function');
   t.end();
 });
 
@@ -455,4 +462,23 @@ test('async compose helper test', function (t) {
   result.then(function (result) {
     t.equal(result, 3, 'promise resolves to correct value');
   });
+});
+
+test('async helper test', function (t) {
+  var instance = mixinable({
+    foo: async.override,
+    bar: async.parallel,
+    baz: async.pipe,
+    qux: async.compose
+  })({
+    foo: function () {},
+    bar: function () {},
+    baz: function () {},
+    qux: function () {}
+  })();
+  t.ok(instance.foo() instanceof Promise, 'override result is a promise');
+  t.ok(instance.bar() instanceof Promise, 'parallel result is a promise');
+  t.ok(instance.baz() instanceof Promise, 'pipe result is a promise');
+  t.ok(instance.qux() instanceof Promise, 'compose result is a promise');
+  t.end();
 });
