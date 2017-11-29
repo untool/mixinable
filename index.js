@@ -1,24 +1,11 @@
 'use strict';
 
-module.exports = exports = function define (definition) {
-  var mixinable = createMixinable(definition);
+module.exports = exports = function define (strategies) {
   return function mixin () {
-    var mixins = argsToArray(arguments).map(createMixin);
-    return function create () {
-      var args = argsToArray(arguments);
-      return Object.defineProperties(
-        new (bindArgs(mixinable, args))(),
-        {
-          __implementations__: { value: getImplementations(
-            mixinable,
-            mixins.map(function (mixin) {
-              return new (bindArgs(mixin, args))();
-            })
-          )},
-          __clone__: { value: bindArgs(create, args) }
-        }
-      );
-    };
+    return createMixinable(
+      strategies || {},
+      argsToArray(arguments).map(createMixin)
+    );
   };
 };
 
@@ -68,49 +55,84 @@ exports.compose = function compose (_functions) {
 // utility exports
 
 exports.async = {
-  override: function () {
-    return Promise.resolve(exports.override.apply(null, arguments));
+  override: function overrideAsync () {
+    return promisify(exports.override.apply(null, arguments));
   },
-  parallel: function () {
-    return Promise.resolve(exports.parallel.apply(null, arguments));
+  parallel: function parallelAsync () {
+    return promisify(exports.parallel.apply(null, arguments));
   },
-  pipe: function () {
-    return Promise.resolve(exports.pipe.apply(null, arguments));
+  pipe: function pipeAsync () {
+    return promisify(exports.pipe.apply(null, arguments));
   },
-  compose: function () {
-    return Promise.resolve(exports.compose.apply(null, arguments));
+  compose: function composeAsync () {
+    return promisify(exports.compose.apply(null, arguments));
   }
 };
 
-exports.clone = function clone (instance) {
-  var args = argsToArray(arguments).slice(1);
-  if (instance && isFunction(instance.__clone__)) {
-    return instance.__clone__.apply(null, args);
-  }
+exports.replicate = function replicate (handleArgs) {
+  return function (instance) {
+    if (instance) {
+      return new (bindArgs(instance.constructor, handleArgs(
+        instance.__arguments__,
+        argsToArray(arguments).slice(1)
+      )))();
+    }
+  };
 };
 
-// classy helpers
+exports.clone = exports.replicate(Array.prototype.concat.bind([]));
 
-function createMixinable (definition) {
+// Mixinable helpers
+
+function createMixinable (strategies, mixins) {
   function Mixinable () {
-    getConstructor(definition).apply(this, arguments);
+    var args = argsToArray(arguments);
+    if (!(this instanceof Mixinable)) {
+      return new (bindArgs(Mixinable, args))();
+    }
+    enhanceInstance(this, strategies, mixins, args);
   }
-  var prototype = getPrototype(definition);
   Mixinable.prototype = Object.assign(
-    Object.create(prototype),
-    Object.keys(prototype).reduce(function (result, key) {
-      result[key] = function () {
-        var args = argsToArray(arguments);
-        var functions = this.__implementations__[key];
-        var strategy = prototype[key];
-        return strategy.apply(this, [functions].concat(args));
-      };
-      return result;
-    }, {}),
+    enhancePrototype(strategies),
     { constructor: Mixinable }
   );
   return Mixinable;
 }
+
+function enhanceInstance (instance, strategies, mixins, args) {
+  var mixinstances = mixins.map(function (mixin) {
+    return new (bindArgs(mixin, args))();
+  });
+  Object.defineProperties(instance, {
+    __implementations__: {
+      value: Object.keys(strategies).reduce(function (result, key) {
+        result[key] = mixinstances
+          .filter(function (mixinstance) {
+            return isFunction(mixinstance[key]);
+          })
+          .map(function (mixinstance) {
+            return mixinstance[key].bind(mixinstance);
+          });
+        return result;
+      }, {})
+    },
+    __arguments__: { value: args }
+  });
+}
+
+function enhancePrototype (strategies) {
+  return Object.keys(strategies).reduce(function (result, key) {
+    result[key] = function () {
+      var args = argsToArray(arguments);
+      var functions = this.__implementations__[key];
+      var strategy = strategies[key];
+      return strategy.apply(this, [functions].concat(args));
+    };
+    return result;
+  }, {});
+}
+
+// Mixin helpers
 
 function createMixin (definition) {
   if (isFunction(definition)) {
@@ -124,36 +146,6 @@ function createMixin (definition) {
     { constructor: Mixin }
   );
   return Mixin;
-}
-
-function getImplementations (mixinable, mixinstances) {
-  return Object.keys(mixinable.prototype).reduce(function (result, key) {
-    result[key] = mixinstances
-      .filter(function (mixinstance) {
-        return isFunction(mixinstance[key]);
-      })
-      .map(function (mixinstance) {
-        return mixinstance[key].bind(mixinstance);
-      });
-    return result;
-  }, {});
-}
-
-// utilities
-
-var argsToArray = Function.prototype.apply.bind(
-  function argsToArray () {
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; ++i) {
-      args[i] = arguments[i];
-    }
-    return args;
-  },
-  null
-);
-
-function bindArgs (fn, args) {
-  return Function.prototype.bind.apply(fn, [fn].concat(args));
 }
 
 function getConstructor (obj) {
@@ -173,10 +165,31 @@ function getPrototype (obj) {
   return obj || Object.create(null);
 }
 
+// utilities
+
+var argsToArray = Function.prototype.apply.bind(
+  function argsToArray () {
+    var args = new Array(arguments.length);
+    for (var i = 0; i < args.length; ++i) {
+      args[i] = arguments[i];
+    }
+    return args;
+  },
+  null
+);
+
+function bindArgs (fn, args) {
+  return Function.prototype.bind.apply(fn, [fn].concat(args));
+}
+
 function isFunction (obj) {
   return typeof obj === 'function';
 }
 
 function isPromise (obj) {
   return obj instanceof Promise;
+}
+
+function promisify (obj) {
+  return isPromise(obj) ? obj : Promise.resolve(obj);
 }
