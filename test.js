@@ -7,6 +7,7 @@ var async = mixinable.async;
 
 test('exports test', function (t) {
   t.equal(typeof mixinable, 'function', 'main export is a function');
+  t.equal(typeof mixinable.replicate, 'function', 'replicate is a function');
   t.equal(typeof mixinable.clone, 'function', 'clone is a function');
   t.equal(typeof mixinable.override, 'function', 'override is a function');
   t.equal(typeof mixinable.parallel, 'function', 'parallel is a function');
@@ -29,34 +30,10 @@ test('basic function test', function (t) {
   t.end();
 });
 
-test('clone function test', function (t) {
-  var arg1 = 1;
-  var arg2 = 2;
-  var create = mixinable({
-    constructor: function (bar, baz) {
-      this.bar = bar;
-      this.baz = baz;
-    }
-  })();
-  var instance = create(arg1);
-  t.equal(instance.bar, arg1, 'instance has expected 1st property');
-  t.equal(instance.baz, undefined, 'instance does not have 2nd property');
-  var clone = mixinable.clone(instance, arg2);
-  t.equal(clone.bar, arg1, 'clone has expected 1st property');
-  t.equal(clone.baz, arg2, 'clone has expected 2nd property');
-  t.end();
-});
-
 test('constructor support test', function (t) {
-  t.plan(4);
+  t.plan(3);
   var arg = 1;
-  mixinable(
-    {
-      constructor: function (_arg) {
-        t.equal(_arg, arg, 'facade receives correct arg');
-      }
-    }
-  )(
+  mixinable()(
     {
       constructor: function (_arg) {
         t.equal(_arg, arg, '1st implementation receives correct arg');
@@ -76,28 +53,8 @@ test('constructor support test', function (t) {
 });
 
 test('inheritance test', function (t) {
-  t.plan(15);
+  t.plan(8);
   var arg = 1;
-  function Strategy (_arg) {
-    t.pass('strategy constructor is being called');
-    t.equal(_arg, arg, 'strategy constructor receives correct arg');
-    t.ok(this instanceof Strategy, 'strategy inherits correctly');
-    t.ok(
-      Strategy.prototype.isPrototypeOf(this),
-      'strategy prototype chain is set up'
-    );
-  }
-  Strategy.prototype = {
-    foo: function (functions, _arg) {
-      t.equal(_arg, arg, 'strategy definition receives correct arg');
-      t.ok(this instanceof Strategy, 'strategy inherits correctly');
-      t.ok(
-        Strategy.prototype.isPrototypeOf(this),
-        'strategy prototype chain is set up'
-      );
-      functions.forEach(function (fn) { fn(_arg); });
-    }
-  };
   function Implementation (_arg) {
     t.pass('implementation constructor is being called');
     t.equal(_arg, arg, 'implementation constructor receives correct arg');
@@ -118,7 +75,11 @@ test('inheritance test', function (t) {
       );
     }
   };
-  var instance = mixinable(Strategy)(Implementation)(arg);
+  var instance = mixinable({
+    foo: function (functions, arg) {
+      functions.forEach(function (fn) { fn(arg); });
+    }
+  })(Implementation)(arg);
   instance.foo(arg);
 });
 
@@ -480,5 +441,45 @@ test('async helper test', function (t) {
   t.ok(instance.bar() instanceof Promise, 'parallel result is a promise');
   t.ok(instance.baz() instanceof Promise, 'pipe result is a promise');
   t.ok(instance.qux() instanceof Promise, 'compose result is a promise');
+  t.end();
+});
+
+test('replicate function test', function (t) {
+  t.plan(3);
+  var arg1 = 1;
+  var arg2 = 2;
+  var create = mixinable({
+    foo: mixinable.override
+  })({
+    constructor: function (bar) {
+      this.foo = function () { return bar; };
+    }
+  });
+  var instance = create(arg1);
+  t.equal(instance.foo(), arg1, 'instance returns expected value');
+  var replicate = mixinable.replicate(function (initialArgs, newArgs) {
+    t.pass('handleArgs is being called');
+    return [initialArgs[0] + newArgs[0]];
+  });
+  var replica = replicate(instance, arg2);
+  t.equal(replica.foo(), arg1 + arg2, 'clone returns expected value');
+});
+
+test('clone function test', function (t) {
+  var arg1 = 1;
+  var arg2 = 2;
+  var create = mixinable({
+    foo: mixinable.override
+  })({
+    constructor: function (bar, baz) {
+      this.foo = function () {
+        return bar + (baz || 0);
+      };
+    }
+  });
+  var instance = create(arg1);
+  t.equal(instance.foo(), arg1, 'instance returns expected value');
+  var clone = mixinable.clone(instance, arg2);
+  t.equal(clone.foo(), arg1 + arg2, 'clone returns expected value');
   t.end();
 });
