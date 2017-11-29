@@ -7,7 +7,7 @@
 
 Mixins are plain Objects (or hashes) that can easily be shared, modified and extended using standard language features such as [spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_operator#Spread_in_object_literals) or [`Object.assign()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign).
 
-`mixinable` allows you to provide custom [`constructor`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/constructor) functions and supports asynchronous methods returning [`Promises`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promises). It is built in a functional way, allowing you to, for example, apply [`fn.bind()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind).
+`mixinable` allows you to provide custom mixin [`constructor`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/constructor) functions and supports asynchronous methods returning [`Promises`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promises). It is built in a functional way, allowing you to, for example, apply [`fn.bind()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind).
 
 
 ### Installation
@@ -35,7 +35,7 @@ The main export of `mixinable` is a `define()` function accepting a mixin contai
 
 It returns a variadic `mixin()` function that accepts the mixin definitions you want to apply and returns a `create()` function. Mixin definitions are hashes containing mixin method implementations that are being applied using the aforementioned strategies.
 
-And that `create()` function accepts whatever arguments the `constructor()`s of your mixin container and your mixins accept. 
+And that `create()` function accepts whatever arguments the `constructor()`s of your mixins accept. 
 
 ##### Example
 
@@ -97,26 +97,28 @@ console.log(typeof foo.bar, typeof foo.qux);
 // function undefined
 ```
 
-Both mixin container and mixin definitions can contain custom constructors. These functions are being passed the `create()` function's arguments upon creation.
+Mixin definitions can be (or contain) custom constructors. These functions are being passed the `create()` function's arguments upon creation.
 
 ##### Example
 
 ```javascript
 import define from 'mixinable';
 
-const mixin = define({
-  // mixin container contructor
-  constructor: function (arg) {
-    console.log(arg);
-  }
-});
+const mixin = define();
 
-const create = mixin({
-  // mixin contructor
-  constructor: function (arg) {
-    console.log(arg);
+const create = mixin(
+  // mixin contructors
+  {
+    constructor: function (arg) {
+      console.log(arg);
+    }
+  },
+  class {
+    constructor (arg) {
+      console.log(arg);
+    }
   }
-});
+);
 
 create('yee-hah!');
 // yee-hah!
@@ -145,7 +147,7 @@ const create = mixin(
       console.log(1);
     }
   },
-  {
+  class {
     bar () {
       console.log(2);
     }
@@ -180,7 +182,7 @@ const create = mixin(
       return Promise.resolve(val + inc);
     }
   },
-  {
+  class {
     bar (val, inc) {
       return val + inc;
     }
@@ -215,7 +217,7 @@ const create = mixin(
       return Promise.resolve(val + inc);
     }
   },
-  {
+  class {
     bar (val, inc) {
       return (val + inc);
     }
