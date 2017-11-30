@@ -73,7 +73,7 @@ exports.replicate = function replicate (handleArgs) {
   return function (instance) {
     if (instance) {
       return new (bindArgs(instance.constructor, handleArgs(
-        instance.__arguments__,
+        instance.__arguments__ || [],
         argsToArray(arguments).slice(1)
       )))();
     }
@@ -82,28 +82,32 @@ exports.replicate = function replicate (handleArgs) {
 
 exports.clone = exports.replicate(Array.prototype.concat.bind([]));
 
-// Mixinable helpers
+// classy helpers
 
 function createMixinable (strategies, mixins) {
+  var constructor = getConstructor(strategies);
+  var prototype = getPrototype(strategies);
   function Mixinable () {
     var args = argsToArray(arguments);
     if (!(this instanceof Mixinable)) {
       return new (bindArgs(Mixinable, args))();
     }
-    enhanceInstance(this, strategies, mixins, args);
+    enhanceInstance.call(this, prototype, mixins, args);
+    constructor.apply(this, args);
   }
   Mixinable.prototype = Object.assign(
-    enhancePrototype(strategies),
+    Object.create(prototype),
+    enhancePrototype(prototype),
     { constructor: Mixinable }
   );
   return Mixinable;
 }
 
-function enhanceInstance (instance, strategies, mixins, args) {
+function enhanceInstance (strategies, mixins, args) {
   var mixinstances = mixins.map(function (mixin) {
     return new (bindArgs(mixin, args))();
   });
-  Object.defineProperties(instance, {
+  Object.defineProperties(this, {
     __implementations__: {
       value: Object.keys(strategies).reduce(function (result, key) {
         result[key] = mixinstances
@@ -131,8 +135,6 @@ function enhancePrototype (strategies) {
     return result;
   }, {});
 }
-
-// Mixin helpers
 
 function createMixin (definition) {
   if (isFunction(definition)) {
