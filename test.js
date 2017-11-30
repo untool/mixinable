@@ -31,9 +31,15 @@ test('basic function test', function (t) {
 });
 
 test('constructor support test', function (t) {
-  t.plan(3);
+  t.plan(4);
   var arg = 1;
-  mixinable()(
+  mixinable(
+    {
+      constructor: function (_arg) {
+        t.equal(_arg, arg, 'facade receives correct arg');
+      }
+    }
+  )(
     {
       constructor: function (_arg) {
         t.equal(_arg, arg, '1st implementation receives correct arg');
@@ -53,8 +59,28 @@ test('constructor support test', function (t) {
 });
 
 test('inheritance test', function (t) {
-  t.plan(8);
+  t.plan(15);
   var arg = 1;
+  function Strategy (_arg) {
+    t.pass('strategy constructor is being called');
+    t.equal(_arg, arg, 'strategy constructor receives correct arg');
+    t.ok(this instanceof Strategy, 'strategy inherits correctly');
+    t.ok(
+      Strategy.prototype.isPrototypeOf(this),
+      'strategy prototype chain is set up'
+    );
+  }
+  Strategy.prototype = {
+    foo: function (functions, _arg) {
+      t.equal(_arg, arg, 'strategy definition receives correct arg');
+      t.ok(this instanceof Strategy, 'strategy inherits correctly');
+      t.ok(
+        Strategy.prototype.isPrototypeOf(this),
+        'strategy prototype chain is set up'
+      );
+      functions.forEach(function (fn) { fn(_arg); });
+    }
+  };
   function Implementation (_arg) {
     t.pass('implementation constructor is being called');
     t.equal(_arg, arg, 'implementation constructor receives correct arg');
@@ -75,11 +101,7 @@ test('inheritance test', function (t) {
       );
     }
   };
-  var instance = mixinable({
-    foo: function (functions, arg) {
-      functions.forEach(function (fn) { fn(arg); });
-    }
-  })(Implementation)(arg);
+  var instance = mixinable(Strategy)(Implementation)(arg);
   instance.foo(arg);
 });
 
