@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node test.js | tap-spec",
+    "lint": "semistandard",
     "release": "standard-version",
     "postrelease": "git push --follow-tags; npm publish --registry https://registry.npmjs.org/"
   },
