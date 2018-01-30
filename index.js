@@ -69,6 +69,10 @@ exports.async = {
   }
 };
 
+exports.isMixinable = function isMixinable (obj) {
+  return obj && '__implementations__' in obj && '__arguments__' in obj;
+};
+
 exports.replicate = function replicate (handleArgs) {
   return function (instance) {
     if (instance) {
