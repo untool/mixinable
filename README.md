@@ -35,7 +35,7 @@ The main export of `mixinable` is a `define()` function accepting a mixin contai
 
 It returns a variadic `mixin()` function that accepts the mixin definitions you want to apply and returns a `create()` function. Mixin definitions are hashes containing mixin method implementations that are being applied using the aforementioned strategies.
 
-And that `create()` function accepts whatever arguments your `constructor()`s accept. 
+And that `create()` function accepts whatever arguments your `constructor()`s accept.
 
 ##### Example
 
@@ -160,6 +160,8 @@ foo.bar();
 // 2
 ```
 
+`override` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.override`.
+
 
 #### ```define.parallel```
 
@@ -194,6 +196,8 @@ const foo = create();
 foo.bar(0, 1).then(res => console.log(res));
 // [1, 1]
 ```
+
+`parallel` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.parallel`.
 
 
 #### ```define.pipe```
@@ -230,6 +234,9 @@ foo.bar(0, 1).then(res => console.log(res));
 // 2
 ```
 
+`pipe` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.pipe`.
+
+
 #### ```define.compose```
 
 `compose` works essentially identically as `pipe`, but in reverse order: the very last implementation receives the initial value and the first implementation returns the final output.
@@ -246,6 +253,8 @@ const mixin = define({
 
 // ...
 ```
+
+`compose` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.compose`.
 
 
 #### Custom Strategies
@@ -276,6 +285,16 @@ const foo = create();
 foo.bar(1);
 // 1
 ```
+
+#### Utilities
+
+##### `define.async`
+
+All of the strategies described above return a `Promise` if one of their implementations does. If you want them to always return a `Promise` please use `define.async.{override,parallel,pipe,compose}`.
+
+##### `define.isMixinable(object)`
+
+If you need to check whether an object actually is an instance of a `mixinable`, you can simply test it using this function that returns `true` or `false`.
 
 
 ### Contributing
