@@ -466,6 +466,15 @@ test('async helper test', function (t) {
   t.end();
 });
 
+test('isMixinable function test', function (t) {
+  t.notOk(mixinable.isMixinable(), 'non-mixinable is detected');
+  t.notOk(mixinable.isMixinable({}), 'non-mixinable is detected');
+  t.notOk(mixinable.isMixinable(null), 'non-mixinable is detected');
+  t.notOk(mixinable.isMixinable(undefined), 'non-mixinable is detected');
+  t.ok(mixinable.isMixinable(mixinable()()()), 'mixinable is detected');
+  t.end();
+});
+
 test('replicate function test', function (t) {
   t.plan(3);
   var arg1 = 1;
