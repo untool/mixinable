@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dmbch/mixinable.git"
+    "url": "git+https://github.com/untool/mixinable.git"
   },
   "author": "dmbch",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/dmbch/mixinable/issues"
+    "url": "https://github.com/untool/mixinable/issues"
   },
-  "homepage": "https://github.com/dmbch/mixinable#readme",
+  "homepage": "https://github.com/untool/mixinable#readme",
   "devDependencies": {
     "semistandard": "^11.0.0",
     "standard-version": "^4.2.0",
