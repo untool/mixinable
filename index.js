@@ -56,16 +56,31 @@ exports.compose = function compose (_functions) {
 
 exports.async = {
   override: function overrideAsync () {
-    return promisify(exports.override.apply(null, arguments));
+    return ensureAsync(exports.override.apply(null, arguments));
   },
   parallel: function parallelAsync () {
-    return promisify(exports.parallel.apply(null, arguments));
+    return ensureAsync(exports.parallel.apply(null, arguments));
   },
   pipe: function pipeAsync () {
-    return promisify(exports.pipe.apply(null, arguments));
+    return ensureAsync(exports.pipe.apply(null, arguments));
   },
   compose: function composeAsync () {
-    return promisify(exports.compose.apply(null, arguments));
+    return ensureAsync(exports.compose.apply(null, arguments));
+  }
+};
+
+exports.sync = {
+  override: function overrideSync () {
+    return ensureSync(exports.override.apply(null, arguments));
+  },
+  parallel: function parallelSync () {
+    return ensureSync(exports.parallel.apply(null, arguments));
+  },
+  pipe: function pipeSync () {
+    return ensureSync(exports.pipe.apply(null, arguments));
+  },
+  compose: function composeSync () {
+    return ensureSync(exports.compose.apply(null, arguments));
   }
 };
 
@@ -196,6 +211,13 @@ function isPromise (obj) {
   return obj instanceof Promise;
 }
 
-function promisify (obj) {
+function ensureAsync (obj) {
   return isPromise(obj) ? obj : Promise.resolve(obj);
+}
+
+function ensureSync (obj) {
+  if (isPromise(obj)) {
+    throw new Error('got promise in sync mode');
+  }
+  return obj;
 }

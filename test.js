@@ -4,6 +4,7 @@ var test = require('tape');
 var mixinable = require('./index');
 
 var async = mixinable.async;
+var sync = mixinable.sync;
 
 test('exports test', function (t) {
   t.equal(typeof mixinable, 'function', 'main export is a function');
@@ -17,6 +18,10 @@ test('exports test', function (t) {
   t.equal(typeof async.parallel, 'function', 'async.parallel is a function');
   t.equal(typeof async.pipe, 'function', 'async.pipe is a function');
   t.equal(typeof async.compose, 'function', 'async.compose is a function');
+  t.equal(typeof sync.override, 'function', 'sync.override is a function');
+  t.equal(typeof sync.parallel, 'function', 'sync.parallel is a function');
+  t.equal(typeof sync.pipe, 'function', 'sync.pipe is a function');
+  t.equal(typeof sync.compose, 'function', 'sync.compose is a function');
   t.end();
 });
 
@@ -463,6 +468,25 @@ test('async helper test', function (t) {
   t.ok(instance.bar() instanceof Promise, 'parallel result is a promise');
   t.ok(instance.baz() instanceof Promise, 'pipe result is a promise');
   t.ok(instance.qux() instanceof Promise, 'compose result is a promise');
+  t.end();
+});
+
+test('sync helper test', function (t) {
+  var instance = mixinable({
+    foo: sync.override,
+    bar: sync.parallel,
+    baz: sync.pipe,
+    qux: sync.compose
+  })({
+    foo: function () { return Promise.resolve(); },
+    bar: function () { return Promise.resolve(); },
+    baz: function () { return Promise.resolve(); },
+    qux: function () { return Promise.resolve(); }
+  })();
+  t.throws(instance.foo, 'override throws if result is a promise');
+  t.throws(instance.bar, 'parallel throws if result is a promise');
+  t.throws(instance.baz, 'pipe throws if result is a promise');
+  t.throws(instance.qux, 'compose throws if result is a promise');
   t.end();
 });
 
