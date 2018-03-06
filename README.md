@@ -1,6 +1,6 @@
 # Mixinable
 
-[![travis](https://img.shields.io/travis/dmbch/mixinable.svg)](https://travis-ci.org/dmbch/mixinable)&nbsp;[![npm](https://img.shields.io/npm/v/mixinable.svg)](https://www.npmjs.com/package/mixinable)
+[![travis](https://img.shields.io/travis/untool/mixinable.svg)](https://travis-ci.org/untool/mixinable)&nbsp;[![npm](https://img.shields.io/npm/v/mixinable.svg)](https://www.npmjs.com/package/mixinable)
 <br/>
 
 `mixinable` is a small functional utility library allowing you to use [mixins](https://addyosmani.com/resources/essentialjsdesignpatterns/book/#mixinpatternjavascript) in your code. More specifically, it allows you to create mixin containers that apply mixin method application strategies to mixin method implementations.
