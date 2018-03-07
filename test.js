@@ -21,6 +21,7 @@ test('exports test', function (t) {
   t.equal(typeof sync.override, 'function', 'sync.override is a function');
   t.equal(typeof sync.parallel, 'function', 'sync.parallel is a function');
   t.equal(typeof sync.pipe, 'function', 'sync.pipe is a function');
+  t.equal(typeof sync.sequence, 'function', 'sync.sequence is a function');
   t.equal(typeof sync.compose, 'function', 'sync.compose is a function');
   t.end();
 });
@@ -476,17 +477,20 @@ test('sync helper test', function (t) {
     foo: sync.override,
     bar: sync.parallel,
     baz: sync.pipe,
-    qux: sync.compose
+    qux: sync.sequence,
+    quz: sync.compose
   })({
     foo: function () { return Promise.resolve(); },
     bar: function () { return Promise.resolve(); },
     baz: function () { return Promise.resolve(); },
-    qux: function () { return Promise.resolve(); }
+    qux: function () { return Promise.resolve(); },
+    quz: function () { return Promise.resolve(); }
   })();
   t.throws(instance.foo, 'override throws if result is a promise');
   t.throws(instance.bar, 'parallel throws if result is a promise');
   t.throws(instance.baz, 'pipe throws if result is a promise');
-  t.throws(instance.qux, 'compose throws if result is a promise');
+  t.throws(instance.qux, 'sequence throws if result is a promise');
+  t.throws(instance.quz, 'compose throws if result is a promise');
   t.end();
 });
 

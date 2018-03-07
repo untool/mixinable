@@ -1,5 +1,7 @@
 'use strict';
 
+// main export
+
 module.exports = exports = function define (strategies) {
   return function mixin () {
     return createMixinable(
@@ -72,6 +74,9 @@ exports.async = {
 exports.sync = {
   override: function overrideSync () {
     return ensureSync(exports.override.apply(null, arguments));
+  },
+  sequence: function sequenceSync () {
+    return ensureSync(exports.parallel.apply(null, arguments));
   },
   parallel: function parallelSync () {
     return ensureSync(exports.parallel.apply(null, arguments));
