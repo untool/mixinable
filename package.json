@@ -6,9 +6,11 @@
   "scripts": {
     "test": "ava --verbose",
     "lint": "eslint \"packages/**/*.js\"",
-    "fmt": "prettier --write --ignore-path .gitignore '**/*.{js,json,css}' '**/README.md'",
+    "fmt":
+      "prettier --write --ignore-path .gitignore '**/*.{js,json,css}' '**/README.md'",
     "release": "standard-version",
-    "postrelease": "git push --follow-tags; npm publish --registry https://registry.npmjs.org/"
+    "postrelease":
+      "git push --follow-tags; npm publish --registry https://registry.npmjs.org/"
   },
   "repository": {
     "type": "git",
@@ -21,6 +23,7 @@
   },
   "homepage": "https://github.com/untool/mixinable#readme",
   "devDependencies": {
+    "ava": "^0.25.0",
     "eslint": "^4.18.2",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-prettier": "^2.6.0",
@@ -35,13 +38,8 @@
     "singleQuote": true
   },
   "eslintConfig": {
-    "extends": [
-      "eslint:recommended",
-      "prettier"
-    ],
-    "plugins": [
-      "prettier"
-    ],
+    "extends": ["eslint:recommended", "prettier"],
+    "plugins": ["prettier"],
     "env": {
       "node": true,
       "es6": true
@@ -51,16 +49,7 @@
     }
   },
   "lint-staged": {
-    "*.{js,json,css}": [
-      "prettier --write",
-      "git add"
-    ],
-    "**/README.md": [
-      "prettier --write",
-      "git add"
-    ]
-  },
-  "dependencies": {
-    "ava": "^0.25.0"
+    "*.{js,json,css}": ["prettier --write", "git add"],
+    "**/README.md": ["prettier --write", "git add"]
   }
 }
