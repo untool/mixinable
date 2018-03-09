@@ -4,8 +4,9 @@
   "description": "Functional JavaScript Mixin Utility",
   "main": "index.js",
   "scripts": {
-    "test": "node test.js | tap-spec",
-    "lint": "semistandard",
+    "test": "ava --verbose",
+    "lint": "eslint \"packages/**/*.js\"",
+    "fmt": "prettier --write --ignore-path .gitignore '**/*.{js,json,css}' '**/README.md'",
     "release": "standard-version",
     "postrelease": "git push --follow-tags; npm publish --registry https://registry.npmjs.org/"
   },
@@ -20,9 +21,46 @@
   },
   "homepage": "https://github.com/untool/mixinable#readme",
   "devDependencies": {
-    "semistandard": "^11.0.0",
-    "standard-version": "^4.2.0",
-    "tap-spec": "^4.1.1",
-    "tape": "^4.8.0"
+    "eslint": "^4.18.2",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-prettier": "^2.6.0",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.0.0",
+    "prettier": "^1.11.1",
+    "standard-version": "^4.2.0"
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "proseWrap": "never",
+    "singleQuote": true
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint:recommended",
+      "prettier"
+    ],
+    "plugins": [
+      "prettier"
+    ],
+    "env": {
+      "node": true,
+      "es6": true
+    },
+    "rules": {
+      "prettier/prettier": "error"
+    }
+  },
+  "lint-staged": {
+    "*.{js,json,css}": [
+      "prettier --write",
+      "git add"
+    ],
+    "**/README.md": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "dependencies": {
+    "ava": "^0.25.0"
   }
 }

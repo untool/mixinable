@@ -1,14 +1,12 @@
 # Mixinable
 
-[![travis](https://img.shields.io/travis/untool/mixinable.svg)](https://travis-ci.org/untool/mixinable)&nbsp;[![npm](https://img.shields.io/npm/v/mixinable.svg)](https://www.npmjs.com/package/mixinable)
-<br/>
+[![travis](https://img.shields.io/travis/untool/mixinable.svg)](https://travis-ci.org/untool/mixinable)&nbsp;[![npm](https://img.shields.io/npm/v/mixinable.svg)](https://www.npmjs.com/package/mixinable) <br/>
 
 `mixinable` is a small functional utility library allowing you to use [mixins](https://addyosmani.com/resources/essentialjsdesignpatterns/book/#mixinpatternjavascript) in your code. More specifically, it allows you to create mixin containers that apply mixin method application strategies to mixin method implementations.
 
 Mixins are plain Objects (or hashes) that can easily be shared, modified and extended using standard language features such as [spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_operator#Spread_in_object_literals) or [`Object.assign()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign).
 
 `mixinable` allows you to provide custom [`constructor`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/constructor) functions and supports asynchronous methods returning [`Promises`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promises). It is built in a functional way, allowing you to, for example, apply [`fn.bind()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind).
-
 
 ### Installation
 
@@ -26,10 +24,9 @@ yarn add mixinable
 
 To be able to use `mixinable`, you will have to make sure your environment supports [`Promise`](https://kangax.github.io/compat-table/es6/#test-Promise) and [`Object.assign()`/`Object.keys()`](https://kangax.github.io/compat-table/es6/#test-Object_static_methods): if you need to support IE11, you will have to [polyfill](https://polyfill.io/v2/docs/) those features.
 
-
 ### API
 
-#### ```define(definition)```
+#### `define(definition)`
 
 The main export of `mixinable` is a `define()` function accepting a mixin container definition. This definition hash is made up of `strategy` functions prescribing how to handle different mixin methods you provide.
 
@@ -44,16 +41,16 @@ import define from 'mixinable';
 
 const mixin = define({
   // mixin strategy function
-  bar (functions, arg) {
+  bar(functions, arg) {
     return functions.pop()(arg);
-  }
+  },
 });
 
 const create = mixin({
   // mixin implementation
-  bar (arg) {
+  bar(arg) {
     console.log(arg);
-  }
+  },
 });
 
 const foo = create();
@@ -72,20 +69,20 @@ Mixin methods not included in your definition are only accessible from within th
 import define from 'mixinable';
 
 const mixin = define({
-  bar (functions, arg) {
+  bar(functions, arg) {
     return functions.pop()(arg);
-  }
+  },
 });
 
 const create = mixin({
   // mixin method implementations
-  bar (arg) {
+  bar(arg) {
     this.qux(arg);
   },
   // private mixin method
-  qux (arg) {
+  qux(arg) {
     console.log(arg);
-  }
+  },
 });
 
 const foo = create();
@@ -109,12 +106,12 @@ const mixin = define();
 const create = mixin(
   // mixin contructors
   {
-    constructor: function (arg) {
+    constructor: function(arg) {
       console.log(arg);
-    }
+    },
   },
   class {
-    constructor (arg) {
+    constructor(arg) {
       console.log(arg);
     }
   }
@@ -125,8 +122,7 @@ create('yee-hah!');
 // yee-hah!
 ```
 
-
-#### ```define.override```
+#### `define.override`
 
 `override` is a helper implementating a mixin strategy that resembles classical inherintance (`class ... extends`): it simply calls the last method implementation.
 
@@ -137,18 +133,18 @@ import define, { override } from 'mixinable';
 
 const mixin = define({
   // mixin strategy function
-  bar: override
+  bar: override,
 });
 
 const create = mixin(
   // mixin method implementations
   {
-    bar () {
+    bar() {
       console.log(1);
-    }
+    },
   },
   class {
-    bar () {
+    bar() {
       console.log(2);
     }
   }
@@ -162,8 +158,7 @@ foo.bar();
 
 `override` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.override`.
 
-
-#### ```define.parallel```
+#### `define.parallel`
 
 `parallel` is a helper implementating a mixin strategy that executes all defined implementations in parallel. This is probably most useful if asynchronous implementations are involved.
 
@@ -174,18 +169,18 @@ import define, { parallel } from 'mixinable';
 
 const mixin = define({
   // mixin strategy function
-  bar: parallel
+  bar: parallel,
 });
 
 const create = mixin(
   // mixin method implementations
   {
-    bar (val, inc) {
+    bar(val, inc) {
       return Promise.resolve(val + inc);
-    }
+    },
   },
   class {
-    bar (val, inc) {
+    bar(val, inc) {
       return val + inc;
     }
   }
@@ -199,8 +194,7 @@ foo.bar(0, 1).then(res => console.log(res));
 
 `parallel` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.parallel`.
 
-
-#### ```define.pipe```
+#### `define.pipe`
 
 `pipe` is a helper implementating a strategy that passes each implementation's output to the next, using the first argument as the initial value. All other arguments are being passed to all implementations as-is.
 
@@ -211,19 +205,19 @@ import define, { pipe } from 'mixinable';
 
 const mixin = define({
   // mixin strategy function
-  bar: pipe
+  bar: pipe,
 });
 
 const create = mixin(
   // mixin method implementations
   {
-    bar (val, inc) {
+    bar(val, inc) {
       return Promise.resolve(val + inc);
-    }
+    },
   },
   class {
-    bar (val, inc) {
-      return (val + inc);
+    bar(val, inc) {
+      return val + inc;
     }
   }
 );
@@ -236,8 +230,7 @@ foo.bar(0, 1).then(res => console.log(res));
 
 `pipe` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.pipe`.
 
-
-#### ```define.compose```
+#### `define.compose`
 
 `compose` works essentially identically as `pipe`, but in reverse order: the very last implementation receives the initial value and the first implementation returns the final output.
 
@@ -248,7 +241,7 @@ import define, { compose } from 'mixinable';
 
 const mixin = define({
   // mixin strategy function
-  bar: compose
+  bar: compose,
 });
 
 // ...
@@ -256,10 +249,9 @@ const mixin = define({
 
 `compose` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.compose`.
 
-
 #### Custom Strategies
 
-You can supply your own mixin strategies: such strategies are plain functions that receive the defined implementations as their first argument. The following example shows a naïve re-implementation of the ```override``` strategy.
+You can supply your own mixin strategies: such strategies are plain functions that receive the defined implementations as their first argument. The following example shows a naïve re-implementation of the `override` strategy.
 
 ##### Example
 
@@ -268,16 +260,16 @@ import define from 'mixinable';
 
 const mixin = define({
   // mixin strategy function
-  bar (functions, ...args) {
+  bar(functions, ...args) {
     functions.pop().apply(null, args);
-  }
+  },
 });
 
 const create = mixin({
   // mixin method implementation
-  bar (arg) {
+  bar(arg) {
     console.log(arg);
-  }
+  },
 });
 
 const foo = create();
@@ -296,7 +288,6 @@ All of the strategies described above return a `Promise` if one of their impleme
 
 If you need to check whether an object actually is an instance of a `mixinable`, you can simply test it using this function that returns `true` or `false`.
 
-
 ### Contributing
 
 If you want to contribute to this project, create a fork of its repository using the GitHub UI. Check out your new fork to your computer:
@@ -308,4 +299,4 @@ git clone git@github.com:user/mixinable.git
 
 Afterwards, you can `yarn install` the required dev dependencies and start hacking away. When you are finished, please do go ahead and create a pull request.
 
-`mixinable` itself is almost entirely written in ECMAScript 5 and adheres to semistandard code style. Please make sure your contribution does, too.
+`mixinable` itself is (almost) entirely written in ECMAScript 5 and adheres to semistandard code style. Please make sure your contribution does, too.
