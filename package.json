@@ -1,16 +1,14 @@
 {
   "name": "mixinable",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Functional JavaScript Mixin Utility",
   "main": "index.js",
   "scripts": {
     "test": "ava --verbose",
     "lint": "eslint \"packages/**/*.js\"",
-    "fmt":
-      "prettier --write --ignore-path .gitignore '**/*.{js,json,css}' '**/README.md'",
+    "fmt": "prettier --write --ignore-path .gitignore '**/*.{js,json,css}' '**/README.md'",
     "release": "standard-version",
-    "postrelease":
-      "git push --follow-tags; npm publish --registry https://registry.npmjs.org/"
+    "postrelease": "git push --follow-tags; npm publish --registry https://registry.npmjs.org/"
   },
   "repository": {
     "type": "git",
@@ -38,8 +36,13 @@
     "singleQuote": true
   },
   "eslintConfig": {
-    "extends": ["eslint:recommended", "prettier"],
-    "plugins": ["prettier"],
+    "extends": [
+      "eslint:recommended",
+      "prettier"
+    ],
+    "plugins": [
+      "prettier"
+    ],
     "env": {
       "node": true,
       "es6": true
@@ -49,7 +52,13 @@
     }
   },
   "lint-staged": {
-    "*.{js,json,css}": ["prettier --write", "git add"],
-    "**/README.md": ["prettier --write", "git add"]
+    "*.{js,json,css}": [
+      "prettier --write",
+      "git add"
+    ],
+    "**/README.md": [
+      "prettier --write",
+      "git add"
+    ]
   }
 }
