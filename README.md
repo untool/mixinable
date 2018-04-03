@@ -1,4 +1,4 @@
-# Mixinable
+# mixinable
 
 [![travis](https://img.shields.io/travis/untool/mixinable.svg)](https://travis-ci.org/untool/mixinable)&nbsp;[![npm](https://img.shields.io/npm/v/mixinable.svg)](https://www.npmjs.com/package/mixinable) <br/>
 
@@ -12,13 +12,13 @@ Mixins are plain Objects (or hashes) that can easily be shared, modified and ext
 
 Using [NPM](https://www.npmjs.com/get-npm):
 
-```bash
+```text
 npm install -S mixinable
 ```
 
 Using [Yarn](https://yarnpkg.com/en/):
 
-```bash
+```text
 yarn add mixinable
 ```
 
@@ -296,7 +296,7 @@ If you need to check whether an object actually is an instance of a `mixinable`,
 
 If you want to contribute to this project, create a fork of its repository using the GitHub UI. Check out your new fork to your computer:
 
-```bash
+```text
 mkdir mixinable && cd $_
 git clone git@github.com:user/mixinable.git
 ```
