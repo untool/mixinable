@@ -114,6 +114,7 @@ function createMixinable(strategies, mixins) {
     }
     enhanceInstance(this, prototype, mixins, args);
     constructor.apply(this, args);
+    bindAll(this);
   }
   Mixinable.prototype = Object.assign(
     Object.create(prototype),
@@ -125,7 +126,7 @@ function createMixinable(strategies, mixins) {
 
 function enhanceInstance(mixinable, strategies, mixins, args) {
   var mixinstances = mixins.map(function(mixin) {
-    return new (bindArgs(mixin, args))();
+    return bindAll(new (bindArgs(mixin, args))());
   });
   var mixinstanceProps = Object.keys(strategies).reduce(function(result, key) {
     result[key] = { value: mixinable[key].bind(mixinable) };
@@ -224,5 +225,30 @@ function ensureSync(obj) {
   if (isPromise(obj)) {
     throw new Error('got promise in sync mode');
   }
+  return obj;
+}
+
+function getPropertyNames(obj) {
+  var props = [];
+  do {
+    Object.getOwnPropertyNames(obj).forEach(function(prop) {
+      if (props.indexOf(prop) === -1) {
+        props.push(prop);
+      }
+    });
+  } while ((obj = Object.getPrototypeOf(obj)) !== Object.prototype);
+  return props;
+}
+
+function getMethodNames(obj) {
+  return getPropertyNames(obj).filter(function(prop) {
+    return prop !== 'constructor' && typeof obj[prop] === 'function';
+  });
+}
+
+function bindAll(obj) {
+  getMethodNames(obj).forEach(function(method) {
+    obj[method] = obj[method].bind(obj);
+  });
   return obj;
 }
