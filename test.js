@@ -614,3 +614,67 @@ test('internal mixin method test', function(t) {
   );
   create().foo();
 });
+
+test('autobinding test', function(t) {
+  return new Promise(function(resolve) {
+    var create = mixinable({
+      foo: mixinable.override,
+      bar: mixinable.override,
+    })({
+      foo: function() {
+        t.pass('first method is being called directly');
+        t.truthy(
+          this.constructor.prototype.foo.hasOwnProperty('prototype'),
+          'first mixin prototype method is unbound'
+        );
+        t.falsy(
+          this.foo.hasOwnProperty('prototype'),
+          'first mixin method is bound'
+        );
+        setTimeout(this.bar, 5);
+      },
+      bar: function() {
+        t.pass('second method is being called indirectly');
+        t.truthy(
+          this.constructor.prototype.bar.hasOwnProperty('prototype'),
+          'second mixin prototype method is unbound'
+        );
+        t.falsy(
+          this.bar.hasOwnProperty('prototype'),
+          'second mixin method is bound'
+        );
+        setTimeout(this.baz, 5);
+      },
+      baz: function() {
+        t.pass('third method is being called indirectly');
+        t.truthy(
+          this.constructor.prototype.baz.hasOwnProperty('prototype'),
+          'third mixin prototype method is unbound'
+        );
+        t.falsy(
+          this.baz.hasOwnProperty('prototype'),
+          'third mixin method is bound'
+        );
+        setTimeout(this.qux, 5);
+      },
+      qux: function() {
+        t.pass('fourth method is being called indirectly');
+        t.truthy(
+          this.constructor.prototype.qux.hasOwnProperty('prototype'),
+          'fourth mixin prototype method is unbound'
+        );
+        t.falsy(
+          this.qux.hasOwnProperty('prototype'),
+          'fourth mixin method is bound'
+        );
+        resolve();
+      },
+    });
+    var instance = create();
+    t.falsy(
+      instance.foo.hasOwnProperty('prototype'),
+      'mixinable method is bound'
+    );
+    instance.foo();
+  });
+});
