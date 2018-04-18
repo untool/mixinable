@@ -593,3 +593,24 @@ test('clone function test', function(t) {
   var clone = mixinable.clone(instance, arg2);
   t.is(clone.foo(), arg1 + arg2, 'clone returns expected value');
 });
+
+test('internal mixin method test', function(t) {
+  t.plan(2);
+  var create = mixinable({
+    foo: mixinable.override,
+    bar: mixinable.override,
+  })(
+    {
+      foo: function() {
+        t.pass('first method is being called directly');
+        this.bar();
+      },
+    },
+    {
+      bar: function() {
+        t.pass('second method is being called indirectly');
+      },
+    }
+  );
+  create().foo();
+});
