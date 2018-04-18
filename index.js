@@ -112,7 +112,7 @@ function createMixinable(strategies, mixins) {
     if (!(this instanceof Mixinable)) {
       return new (bindArgs(Mixinable, args))();
     }
-    enhanceInstance.call(this, prototype, mixins, args);
+    enhanceInstance(this, prototype, mixins, args);
     constructor.apply(this, args);
   }
   Mixinable.prototype = Object.assign(
@@ -123,11 +123,15 @@ function createMixinable(strategies, mixins) {
   return Mixinable;
 }
 
-function enhanceInstance(strategies, mixins, args) {
+function enhanceInstance(mixinable, strategies, mixins, args) {
   var mixinstances = mixins.map(function(mixin) {
     return new (bindArgs(mixin, args))();
   });
-  Object.defineProperties(this, {
+  var mixinstanceProps = Object.keys(strategies).reduce(function(result, key) {
+    result[key] = { value: mixinable[key].bind(mixinable) };
+    return result;
+  }, {});
+  var mixinableProps = {
     __implementations__: {
       value: Object.keys(strategies).reduce(function(result, key) {
         result[key] = mixinstances
@@ -141,7 +145,11 @@ function enhanceInstance(strategies, mixins, args) {
       }, {}),
     },
     __arguments__: { value: args },
+  };
+  mixinstances.forEach(function(mixinstance) {
+    Object.defineProperties(mixinstance, mixinstanceProps);
   });
+  Object.defineProperties(mixinable, mixinableProps);
 }
 
 function enhancePrototype(strategies) {
