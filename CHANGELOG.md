@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="2.0.0"></a>
+# [2.0.0](https://github.com/untool/mixinable/compare/v1.5.2...v2.0.0) (2018-04-19)
+
+
+### Features
+
+* add autobinding ([a79e6af](https://github.com/untool/mixinable/commit/a79e6af))
+* make mixinable methods available to mixins ([1e86af4](https://github.com/untool/mixinable/commit/1e86af4))
+
+
+### BREAKING CHANGES
+
+* all mixin and mixinable methods are now automatically
+being bound to their respective instances
+* even inside mixin instances, their own mixinable methods can
+not be called directly any more
+
+
+
 <a name="1.5.2"></a>
 ## [1.5.2](https://github.com/untool/mixinable/compare/v1.5.1...v1.5.2) (2018-03-10)
 
