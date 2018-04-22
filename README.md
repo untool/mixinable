@@ -4,9 +4,9 @@
 
 `mixinable` is a small functional utility library allowing you to use [mixins](https://addyosmani.com/resources/essentialjsdesignpatterns/book/#mixinpatternjavascript) in your code. More specifically, it allows you to create mixin containers that apply mixin method application strategies to mixin method implementations.
 
-Mixins are plain Objects (or hashes) that can easily be shared, modified and extended using standard language features such as [spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_operator#Spread_in_object_literals) or [`Object.assign()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign).
+Mixins are plain classes (or hashes) that can easily be shared, modified and extended using standard language features such as the [`extends` keyword](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/extends), [spread syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_operator#Spread_in_object_literals) or [`Object.assign()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign).
 
-`mixinable` allows you to provide custom [`constructor`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/constructor) functions and supports asynchronous methods returning [`Promises`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promises). It is built in a functional way, allowing you to, for example, apply [`fn.bind()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind).
+`mixinable` allows you to provide custom [`constructor`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/constructor) functions and supports asynchronous methods returning [`Promises`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promises).
 
 ### Installation
 
@@ -22,7 +22,13 @@ Using [Yarn](https://yarnpkg.com/en/):
 yarn add mixinable
 ```
 
-To be able to use `mixinable`, you will have to make sure your environment supports [`Promise`](https://kangax.github.io/compat-table/es6/#test-Promise) and [`Object.assign()`/`Object.keys()`](https://kangax.github.io/compat-table/es6/#test-Object_static_methods): if you need to support IE11, you will have to [polyfill](https://polyfill.io/v2/docs/) those features.
+To be able to use `mixinable`, you will have to make sure your environment has full [`Promise`](https://kangax.github.io/compat-table/es6/#test-Promise) support. If, for example, you need to support IE11, you will want to conditionally add a [polyfill](https://github.com/stefanpenner/es6-promise) (2.7kB gzipped).
+
+```html
+<!--[if IE]>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/es6-promise/4.1.1/es6-promise.auto.min.js"></script>
+<![endif]-->
+```
 
 ### API
 
@@ -30,7 +36,7 @@ To be able to use `mixinable`, you will have to make sure your environment suppo
 
 The main export of `mixinable` is a `define()` function accepting a mixin container definition. This definition hash is made up of `strategy` functions prescribing how to handle different mixin methods you provide.
 
-It returns a variadic `mixin()` function that accepts the mixin definitions you want to apply and returns a `create()` function. Mixin definitions are hashes containing mixin method implementations that are being applied using the aforementioned strategies.
+It returns a variadic `mixin()` function that accepts the mixin definitions you want to apply and returns a `create()` function. Mixin definitions are classes or hashes containing mixin method implementations that are being applied using the aforementioned strategies.
 
 And that `create()` function accepts whatever arguments your `constructor()`s accept.
 
