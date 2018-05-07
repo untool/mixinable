@@ -22,7 +22,7 @@ Using [Yarn](https://yarnpkg.com/en/):
 yarn add mixinable
 ```
 
-To be able to use `mixinable`, you will have to make sure your environment supports [`Promise`](https://kangax.github.io/compat-table/es6/#test-Promise) and [`Object.assign()`/`Object.keys()`](https://kangax.github.io/compat-table/es6/#test-Object_static_methods): if you need to support IE11, you will have to [polyfill](https://polyfill.io/v2/docs/) those features.
+To be able to use `mixinable`, you will have to make sure your environment supports [`Promise`](https://kangax.github.io/compat-table/es6/#test-Promise): if, for example, you need to support IE11, you will have to [polyfill](https://polyfill.io/v2/docs/) `Promise`.
 
 ### API
 
