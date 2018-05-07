@@ -4,10 +4,7 @@
 
 module.exports = exports = function define(strategies) {
   return function mixin() {
-    return createMixinable(
-      strategies || {},
-      argsToArray(arguments).map(createMixin)
-    );
+    return createMixinable(strategies, argsToArray(arguments).map(createMixin));
   };
 };
 
@@ -26,7 +23,7 @@ exports.parallel = function parallel(functions) {
   var results = functions.map(function(fn) {
     return fn.apply(null, args);
   });
-  return results.filter(isPromise).length ? Promise.all(results) : results;
+  return results.find(isPromise) ? Promise.all(results) : results;
 };
 
 exports.pipe = function pipe(functions) {
@@ -88,15 +85,13 @@ exports.isMixinable = function isMixinable(obj) {
 
 exports.replicate = function replicate(handleArgs) {
   return function(instance) {
-    if (instance) {
-      return new (bindArgs(
+    return (
+      exports.isMixinable(instance) &&
+      new (bindArgs(
         instance.constructor,
-        handleArgs(
-          instance.__arguments__ || [],
-          argsToArray(arguments).slice(1)
-        )
-      ))();
-    }
+        handleArgs(instance.__arguments__, argsToArray(arguments).slice(1))
+      ))()
+    );
   };
 };
 
@@ -112,24 +107,21 @@ function createMixinable(strategies, mixins) {
     if (!(this instanceof Mixinable)) {
       return new (bindArgs(Mixinable, args))();
     }
-    enhanceInstance(this, prototype, mixins, args);
     constructor.apply(this, args);
-    bindAll(this);
+    enhanceInstance(this, prototype, mixins, args);
   }
-  Mixinable.prototype = Object.assign(
-    Object.create(prototype),
-    enhancePrototype(prototype),
-    { constructor: Mixinable }
-  );
+  Mixinable.prototype = enhancePrototype(prototype);
+  Mixinable.prototype.constructor = Mixinable;
   return Mixinable;
 }
 
 function enhanceInstance(mixinable, strategies, mixins, args) {
+  bindAll(mixinable);
   var mixinstances = mixins.map(function(mixin) {
     return bindAll(new (bindArgs(mixin, args))());
   });
   var mixinstanceProps = Object.keys(strategies).reduce(function(result, key) {
-    result[key] = { value: mixinable[key].bind(mixinable) };
+    result[key] = { value: mixinable[key], writable: true };
     return result;
   }, {});
   var mixinableProps = {
@@ -137,15 +129,16 @@ function enhanceInstance(mixinable, strategies, mixins, args) {
       value: Object.keys(strategies).reduce(function(result, key) {
         result[key] = mixinstances
           .filter(function(mixinstance) {
-            return isFunction(mixinstance[key]);
+            return key !== 'constructor' && isFunction(mixinstance[key]);
           })
           .map(function(mixinstance) {
-            return mixinstance[key].bind(mixinstance);
+            return mixinstance[key];
           });
         return result;
       }, {}),
+      writable: true,
     },
-    __arguments__: { value: args },
+    __arguments__: { value: args, writable: true },
   };
   mixinstances.forEach(function(mixinstance) {
     Object.defineProperties(mixinstance, mixinstanceProps);
@@ -153,16 +146,22 @@ function enhanceInstance(mixinable, strategies, mixins, args) {
   Object.defineProperties(mixinable, mixinableProps);
 }
 
-function enhancePrototype(strategies) {
-  return Object.keys(strategies).reduce(function(result, key) {
-    result[key] = function() {
-      var args = argsToArray(arguments);
-      var functions = this.__implementations__[key];
-      var strategy = strategies[key];
-      return strategy.apply(this, [functions].concat(args));
-    };
-    return result;
-  }, {});
+function enhancePrototype(prototype) {
+  return Object.create(
+    prototype,
+    Object.keys(prototype).reduce(function(result, key) {
+      result[key] = {
+        value: function() {
+          var args = argsToArray(arguments);
+          var functions = this.__implementations__[key];
+          var strategy = prototype[key];
+          return strategy.apply(this, [functions].concat(args));
+        },
+        writable: true,
+      };
+      return result;
+    }, {})
+  );
 }
 
 function createMixin(definition) {
@@ -172,8 +171,8 @@ function createMixin(definition) {
   function Mixin() {
     getConstructor(definition).apply(this, arguments);
   }
-  Mixin.prototype = Object.assign(Object.create(getPrototype(definition)), {
-    constructor: Mixin,
+  Mixin.prototype = Object.create(getPrototype(definition), {
+    constructor: { value: Mixin, writable: true },
   });
   return Mixin;
 }
@@ -189,7 +188,7 @@ function getConstructor(obj) {
 }
 
 function getPrototype(obj) {
-  if (isFunction(obj)) {
+  if (isFunction(obj) && obj.hasOwnProperty('prototype')) {
     return obj.prototype;
   }
   return obj || Object.create(null);
@@ -199,7 +198,7 @@ function getPrototype(obj) {
 
 var argsToArray = Function.prototype.apply.bind(function argsToArray() {
   var args = new Array(arguments.length);
-  for (var i = 0; i < args.length; ++i) {
+  for (var i = 0; i < arguments.length; ++i) {
     args[i] = arguments[i];
   }
   return args;
@@ -214,7 +213,7 @@ function isFunction(obj) {
 }
 
 function isPromise(obj) {
-  return obj instanceof Promise;
+  return obj && isFunction(obj.then) && obj instanceof Promise;
 }
 
 function ensureAsync(obj) {
@@ -228,16 +227,11 @@ function ensureSync(obj) {
   return obj;
 }
 
-function getPropertyNames(obj) {
-  var props = [];
-  do {
-    Object.getOwnPropertyNames(obj).forEach(function(prop) {
-      if (props.indexOf(prop) === -1) {
-        props.push(prop);
-      }
-    });
-  } while ((obj = Object.getPrototypeOf(obj)) !== Object.prototype);
-  return props;
+function bindAll(obj) {
+  getMethodNames(obj).forEach(function(method) {
+    obj[method] = obj[method].bind(obj);
+  });
+  return obj;
 }
 
 function getMethodNames(obj) {
@@ -246,9 +240,15 @@ function getMethodNames(obj) {
   });
 }
 
-function bindAll(obj) {
-  getMethodNames(obj).forEach(function(method) {
-    obj[method] = obj[method].bind(obj);
-  });
-  return obj;
+function getPropertyNames(obj) {
+  var props = [];
+  do {
+    obj &&
+      Object.getOwnPropertyNames(obj).forEach(function(prop) {
+        if (props.indexOf(prop) === -1) {
+          props.push(prop);
+        }
+      });
+  } while (obj && (obj = Object.getPrototypeOf(obj)) !== Object.prototype);
+  return props;
 }
