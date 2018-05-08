@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="2.1.0"></a>
+# [2.1.0](https://github.com/untool/mixinable/compare/v2.0.0...v2.1.0) (2018-05-08)
+
+
+### Features
+
+* get rid of Object.assign ([f47547c](https://github.com/untool/mixinable/commit/f47547c))
+
+
+
 <a name="2.0.0"></a>
 # [2.0.0](https://github.com/untool/mixinable/compare/v1.5.2...v2.0.0) (2018-04-19)
 
