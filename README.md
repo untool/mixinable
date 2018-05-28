@@ -288,10 +288,6 @@ All of the strategies described above return a `Promise` if one of their impleme
 
 If you want to make sure one of the strategies never returns a `Promise` please use `define.sync.{override,parallel/sequence,pipe,compose}`. If you do, an `Error` will be thrown if a `Promise` is returned.
 
-##### `define.isMixinable(object)`
-
-If you need to check whether an object actually is an instance of a `mixinable`, you can simply test it using this function that returns `true` or `false`.
-
 ### Contributing
 
 If you want to contribute to this project, create a fork of its repository using the GitHub UI. Check out your new fork to your computer:
