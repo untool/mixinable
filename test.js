@@ -7,10 +7,8 @@ var async = mixinable.async;
 var sync = mixinable.sync;
 
 test('exports test', function(t) {
-  t.plan(16);
+  t.plan(14);
   t.is(typeof mixinable, 'function', 'main export is a function');
-  t.is(typeof mixinable.replicate, 'function', 'replicate is a function');
-  t.is(typeof mixinable.clone, 'function', 'clone is a function');
   t.is(typeof mixinable.override, 'function', 'override is a function');
   t.is(typeof mixinable.parallel, 'function', 'parallel is a function');
   t.is(typeof mixinable.pipe, 'function', 'pipe is a function');
@@ -543,57 +541,6 @@ test('sync helper test', function(t) {
   );
 });
 
-test('isMixinable function test', function(t) {
-  t.plan(5);
-  t.falsy(mixinable.isMixinable(), 'non-mixinable is detected');
-  t.falsy(mixinable.isMixinable({}), 'non-mixinable is detected');
-  t.falsy(mixinable.isMixinable(null), 'non-mixinable is detected');
-  t.falsy(mixinable.isMixinable(undefined), 'non-mixinable is detected');
-  t.truthy(mixinable.isMixinable(mixinable()()()), 'mixinable is detected');
-});
-
-test('replicate function test', function(t) {
-  t.plan(3);
-  var arg1 = 1;
-  var arg2 = 2;
-  var create = mixinable({
-    foo: mixinable.override,
-  })({
-    constructor: function(bar) {
-      this.foo = function() {
-        return bar;
-      };
-    },
-  });
-  var instance = create(arg1);
-  t.is(instance.foo(), arg1, 'instance returns expected value');
-  var replicate = mixinable.replicate(function(initialArgs, newArgs) {
-    t.pass('handleArgs is being called');
-    return [initialArgs[0] + newArgs[0]];
-  });
-  var replica = replicate(instance, arg2);
-  t.is(replica.foo(), arg1 + arg2, 'clone returns expected value');
-});
-
-test('clone function test', function(t) {
-  t.plan(2);
-  var arg1 = 1;
-  var arg2 = 2;
-  var create = mixinable({
-    foo: mixinable.override,
-  })({
-    constructor: function(bar, baz) {
-      this.foo = function() {
-        return bar + (baz || 0);
-      };
-    },
-  });
-  var instance = create(arg1);
-  t.is(instance.foo(), arg1, 'instance returns expected value');
-  var clone = mixinable.clone(instance, arg2);
-  t.is(clone.foo(), arg1 + arg2, 'clone returns expected value');
-});
-
 test('internal mixin method test', function(t) {
   t.plan(2);
   var create = mixinable({
@@ -602,13 +549,13 @@ test('internal mixin method test', function(t) {
   })(
     {
       foo: function() {
-        t.pass('first method is being called directly');
+        t.pass('first method is being called');
         this.bar();
       },
     },
     {
       bar: function() {
-        t.pass('second method is being called indirectly');
+        t.pass('second method is being called');
       },
     }
   );
@@ -622,31 +569,15 @@ test('autobinding test', function(t) {
       bar: mixinable.override,
     })({
       foo: function() {
-        t.pass('first method is being called directly');
-        t.truthy(
-          this.constructor.prototype.foo.hasOwnProperty('prototype'),
-          'first mixin prototype method is unbound'
-        );
-        t.falsy(
-          this.foo.hasOwnProperty('prototype'),
-          'first mixin method is bound'
-        );
+        t.pass('first method is being called');
         setTimeout(this.bar, 5);
       },
       bar: function() {
-        t.pass('second method is being called indirectly');
-        t.truthy(
-          this.constructor.prototype.bar.hasOwnProperty('prototype'),
-          'second mixin prototype method is unbound'
-        );
-        t.falsy(
-          this.bar.hasOwnProperty('prototype'),
-          'second mixin method is bound'
-        );
+        t.pass('second method is being called');
         setTimeout(this.baz, 5);
       },
       baz: function() {
-        t.pass('third method is being called indirectly');
+        t.pass('third method is being called');
         t.truthy(
           this.constructor.prototype.baz.hasOwnProperty('prototype'),
           'third mixin prototype method is unbound'
@@ -658,7 +589,7 @@ test('autobinding test', function(t) {
         setTimeout(this.qux, 5);
       },
       qux: function() {
-        t.pass('fourth method is being called indirectly');
+        t.pass('fourth method is being called');
         t.truthy(
           this.constructor.prototype.qux.hasOwnProperty('prototype'),
           'fourth mixin prototype method is unbound'
@@ -671,10 +602,6 @@ test('autobinding test', function(t) {
       },
     });
     var instance = create();
-    t.falsy(
-      instance.foo.hasOwnProperty('prototype'),
-      'mixinable method is bound'
-    );
     instance.foo();
   });
 });
