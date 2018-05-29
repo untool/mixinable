@@ -12,7 +12,7 @@ module.exports = exports = function define(strategies) {
 
 exports.override = function override(functions) {
   var args = argsToArray(arguments).slice(1);
-  var fn = functions[functions.length - 1];
+  var fn = [].concat(functions).pop();
   if (isFunction(fn)) {
     return fn.apply(null, args);
   }
@@ -43,8 +43,6 @@ exports.compose = function compose(_functions) {
   var functions = [].concat(_functions).reverse();
   return exports.pipe.apply(null, [functions].concat(args));
 };
-
-// utility exports
 
 exports.async = {
   override: function overrideAsync() {
@@ -89,65 +87,50 @@ function createMixinable(strategies, mixins) {
     if (!(this instanceof Mixinable)) {
       return new (bindArgs(Mixinable, args))();
     }
-    var mixinstances = mixins.map(function(mixin) {
-      return bindMethods(new (bindArgs(mixin, args))());
-    });
-    enhanceMixinable(this, mixinstances, prototype);
-    enhanceMixinstances(this, mixinstances, prototype);
     constructor.apply(this, args);
+    bootstrapMixinable(
+      this,
+      mixins.map(function(Mixin) {
+        return new (bindArgs(Mixin, args))();
+      })
+    );
   }
   Mixinable.prototype = Object.create(prototype);
   Mixinable.prototype.constructor = Mixinable;
   return Mixinable;
 }
 
-function enhanceMixinable(mixinable, mixinstances, strategies) {
-  var keys = Object.keys(strategies).filter(function(key) {
-    return key !== 'constructor';
-  });
-  var implementations = keys.reduce(function(result, key) {
-    result[key] = mixinstances
-      .filter(function(mixinstance) {
-        return isFunction(mixinstance[key]);
-      })
-      .map(function(mixinstance) {
-        return mixinstance[key];
-      });
-    return result;
-  }, {});
-  keys.forEach(function(key) {
-    mixinable[key] = function() {
-      var args = argsToArray(arguments);
-      return strategies[key].apply(
-        mixinable,
-        [implementations[key]].concat(args)
-      );
-    };
-  });
-}
-
-function enhanceMixinstances(mixinable, mixinstances, strategies) {
-  Object.keys(strategies)
-    .filter(function(key) {
-      return key !== 'constructor';
-    })
-    .forEach(function(key) {
-      mixinstances.forEach(function(mixinstance) {
-        mixinstance[key] = mixinable[key];
-      });
-    });
-}
-
 function createMixin(definition) {
-  if (isFunction(definition)) {
+  var constructor = getConstructor(definition);
+  var prototype = getPrototype(definition);
+  if (constructor === definition) {
     return definition;
   }
   function Mixin() {
-    getConstructor(definition).apply(this, arguments);
+    constructor.apply(this, arguments);
   }
-  Mixin.prototype = Object.create(getPrototype(definition));
+  Mixin.prototype = Object.create(prototype);
   Mixin.prototype.constructor = Mixin;
   return Mixin;
+}
+
+function bootstrapMixinable(mixinable, mixinstances) {
+  mixinstances.forEach(bindMethods);
+  getMethodNames(mixinable).forEach(function(method) {
+    mixinable[method] = mixinable[method].bind(
+      mixinable,
+      mixinstances
+        .filter(function(mixinstance) {
+          return isFunction(mixinstance[method]);
+        })
+        .map(function(mixinstance) {
+          return mixinstance[method];
+        })
+    );
+    mixinstances.forEach(function(mixinstance) {
+      mixinstance[method] = mixinable[method];
+    });
+  });
 }
 
 function getConstructor(obj) {
