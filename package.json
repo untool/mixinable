@@ -5,12 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "ava --verbose",
-    "lint": "eslint --ignore-path .gitignore \"**/*.js\"",
-    "fmt": "prettier --write --ignore-path .gitignore '**/*.{js,json}'",
+    "lint": "eslint --ignore-path .gitignore '**/*.js'",
+    "fmt": "prettier --write --ignore-path .gitignore '**/*.js'",
     "release": "standard-version",
-    "postrelease": "git push --follow-tags; npm publish",
+    "update": "yarn upgrade-interactive --latest",
+    "reset": "git clean -dfx && yarn",
     "commitmsg": "commitlint -e $GIT_PARAMS",
-    "precommit": "lint-staged"
+    "precommit": "lint-staged",
+    "postrelease": "git push --follow-tags; npm publish"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
@@ -35,12 +37,16 @@
     "eslint-plugin-prettier": "^2.6.0",
     "husky": "^0.14.3",
     "lint-staged": "^7.0.0",
-    "prettier": "^1.11.1",
+    "prettier": "^1.13.4",
     "standard-version": "^4.2.0"
   },
   "renovate": {
-    "extends": ["config:base"],
-    "ignoreDeps": ["prettier"],
+    "extends": [
+      "config:base"
+    ],
+    "ignoreDeps": [
+      "prettier"
+    ],
     "lockFileMaintenance": {
       "enabled": true
     },
@@ -51,12 +57,17 @@
   },
   "prettier": {
     "trailingComma": "es5",
-    "proseWrap": "never",
-    "singleQuote": true
+    "singleQuote": true,
+    "proseWrap": "never"
   },
   "eslintConfig": {
-    "extends": ["eslint:recommended", "prettier"],
-    "plugins": ["prettier"],
+    "extends": [
+      "eslint:recommended",
+      "prettier"
+    ],
+    "plugins": [
+      "prettier"
+    ],
     "rules": {
       "prettier/prettier": "error"
     },
@@ -68,10 +79,15 @@
     }
   },
   "lint-staged": {
-    "*.{js,json}": ["prettier --write", "git add"]
+    "*.js": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "commitlint": {
-    "extends": ["@commitlint/config-conventional"]
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   },
   "config": {
     "commitizen": {
