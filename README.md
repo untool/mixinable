@@ -158,6 +158,8 @@ foo.bar();
 
 `override` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.override`.
 
+`override` is aliased to `callable` in all places, enabling implementers to communicate their intentions more clearly as `override` is often used to provide callable (utility) methods.
+
 #### `define.parallel`
 
 `parallel` is a helper implementating a mixin strategy that executes all defined implementations in parallel. This is probably most useful if asynchronous implementations are involved.
@@ -282,11 +284,11 @@ foo.bar(1);
 
 ##### `define.async`
 
-All of the strategies described above return a `Promise` if one of their implementations does. If you want them to always return a `Promise` please use `define.async.{override,parallel,pipe,compose}`.
+All of the strategies described above return a `Promise` if one of their implementations does. If you want them to always return a `Promise` please use `define.async.{override/callable,parallel,pipe,compose}`.
 
 ##### `define.sync`
 
-If you want to make sure one of the strategies never returns a `Promise` please use `define.sync.{override,parallel/sequence,pipe,compose}`. If you do, an `Error` will be thrown if a `Promise` is returned.
+If you want to make sure one of the strategies never returns a `Promise` please use `define.sync.{override/callable,parallel/sequence,pipe,compose}`. If you do, an `Error` will be thrown if a `Promise` is returned.
 
 ### Contributing
 
