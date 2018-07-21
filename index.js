@@ -11,7 +11,7 @@ module.exports = exports = function define(strategies) {
 
 // strategy exports
 
-exports.override = function override(functions) {
+exports.callable = exports.override = function override(functions) {
   var args = argsToArray(arguments).slice(1);
   var fn = functions.slice().pop();
   if (isFunction(fn)) {
@@ -46,6 +46,7 @@ exports.compose = function compose(functions) {
 };
 
 exports.async = {
+  callable: asynchronize(exports.callable),
   override: asynchronize(exports.override),
   parallel: asynchronize(exports.parallel),
   pipe: asynchronize(exports.pipe),
@@ -53,6 +54,7 @@ exports.async = {
 };
 
 exports.sync = {
+  callable: asynchronize(exports.callable),
   override: synchronize(exports.override),
   sequence: synchronize(exports.parallel),
   parallel: synchronize(exports.parallel),
