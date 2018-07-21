@@ -7,16 +7,19 @@ var async = mixinable.async;
 var sync = mixinable.sync;
 
 test('exports test', function(t) {
-  t.plan(14);
+  t.plan(17);
   t.is(typeof mixinable, 'function', 'main export is a function');
+  t.is(typeof mixinable.callable, 'function', 'callable is a function');
   t.is(typeof mixinable.override, 'function', 'override is a function');
   t.is(typeof mixinable.parallel, 'function', 'parallel is a function');
   t.is(typeof mixinable.pipe, 'function', 'pipe is a function');
   t.is(typeof mixinable.compose, 'function', 'compose is a function');
+  t.is(typeof async.callable, 'function', 'async.callable is a function');
   t.is(typeof async.override, 'function', 'async.override is a function');
   t.is(typeof async.parallel, 'function', 'async.parallel is a function');
   t.is(typeof async.pipe, 'function', 'async.pipe is a function');
   t.is(typeof async.compose, 'function', 'async.compose is a function');
+  t.is(typeof sync.callable, 'function', 'sync.callable is a function');
   t.is(typeof sync.override, 'function', 'sync.override is a function');
   t.is(typeof sync.parallel, 'function', 'sync.parallel is a function');
   t.is(typeof sync.pipe, 'function', 'sync.pipe is a function');
@@ -109,6 +112,32 @@ test('inheritance test', function(t) {
     },
   };
   var instance = mixinable(Strategy)(Implementation)(arg);
+  instance.foo(arg);
+});
+
+test('callable helper test', function(t) {
+  t.plan(2);
+  var arg = 1;
+  var instance = mixinable({
+    foo: mixinable.callable,
+  })(
+    {
+      foo: function() {
+        t.fail('1st implementation should not be called');
+      },
+    },
+    {
+      foo: function() {
+        t.fail('2nd implementation should not be called');
+      },
+    },
+    {
+      foo: function(_arg) {
+        t.pass('3rd implementation is being called');
+        t.is(_arg, arg, '3rd implementation receives correct arg');
+      },
+    }
+  )();
   instance.foo(arg);
 });
 
