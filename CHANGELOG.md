@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="3.1.0"></a>
+# [3.1.0](https://github.com/untool/mixinable/compare/v3.0.0...v3.1.0) (2018-07-23)
+
+
+### Features
+
+* introduce `callable` aliases ([1884832](https://github.com/untool/mixinable/commit/1884832)), closes [#42](https://github.com/untool/mixinable/issues/42)
+
+
+
 <a name="3.0.0"></a>
 # [3.0.0](https://github.com/untool/mixinable/compare/v2.1.0...v3.0.0) (2018-05-30)
 
