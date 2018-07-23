@@ -158,7 +158,7 @@ foo.bar();
 
 `override` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.override`.
 
-`override` is aliased to `callable` in all places, enabling implementers to communicate their intentions more clearly as `override` is often used to provide callable (utility) methods.
+`override` is aliased to `callable` in all places, enabling implementers to communicate their intentions more clearly: `override` is often used to provide callable (utility) methods.
 
 #### `define.parallel`
 
@@ -195,6 +195,8 @@ foo.bar(0, 1).then(res => console.log(res));
 ```
 
 `parallel` returns a `Promise` if one of its implementations does. If you want it to always return a `Promise`, i.e. if you can not be sure whether one of your implementations might return one, please use `define.async.parallel`.
+
+If you want to make sure `parallel` never returns a `Promise`, please use it as `define.sync.parallel` - or, better yet, use it as `define.sync.sequence`, for that is technically correct.
 
 #### `define.pipe`
 
