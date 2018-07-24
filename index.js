@@ -11,7 +11,7 @@ module.exports = exports = function define(strategies) {
 
 // strategy exports
 
-exports.callable = exports.override = function override(functions) {
+exports.override = exports.callable = function override(functions) {
   var args = argsToArray(arguments).slice(1);
   var fn = functions.slice().pop();
   if (isFunction(fn)) {
@@ -46,20 +46,42 @@ exports.compose = function compose(functions) {
 };
 
 exports.async = {
-  callable: asynchronize(exports.callable),
-  override: asynchronize(exports.override),
-  parallel: asynchronize(exports.parallel),
-  pipe: asynchronize(exports.pipe),
-  compose: asynchronize(exports.compose),
+  callable: function callableAsync() {
+    return asynchronize(exports.override).apply(null, arguments);
+  },
+  override: function overrideAsync() {
+    return asynchronize(exports.override).apply(null, arguments);
+  },
+  parallel: function parallelAsync() {
+    return asynchronize(exports.parallel).apply(null, arguments);
+  },
+  pipe: function pipeAsync() {
+    return asynchronize(exports.pipe).apply(null, arguments);
+  },
+  compose: function composeAsync() {
+    return asynchronize(exports.compose).apply(null, arguments);
+  },
 };
 
 exports.sync = {
-  callable: synchronize(exports.callable),
-  override: synchronize(exports.override),
-  sequence: synchronize(exports.parallel),
-  parallel: synchronize(exports.parallel),
-  pipe: synchronize(exports.pipe),
-  compose: synchronize(exports.compose),
+  callable: function callableSync() {
+    return synchronize(exports.override).apply(null, arguments);
+  },
+  override: function overrideSync() {
+    return synchronize(exports.override).apply(null, arguments);
+  },
+  sequence: function sequenceSync() {
+    return synchronize(exports.parallel).apply(null, arguments);
+  },
+  parallel: function parallelSync() {
+    return synchronize(exports.parallel).apply(null, arguments);
+  },
+  pipe: function pipeSync() {
+    return synchronize(exports.pipe).apply(null, arguments);
+  },
+  compose: function composeSync() {
+    return synchronize(exports.compose).apply(null, arguments);
+  },
 };
 
 // core functions
