@@ -54,7 +54,7 @@ exports.async = {
 };
 
 exports.sync = {
-  callable: asynchronize(exports.callable),
+  callable: synchronize(exports.callable),
   override: synchronize(exports.override),
   sequence: synchronize(exports.parallel),
   parallel: synchronize(exports.parallel),
