@@ -28,66 +28,32 @@ test('exports test', function(t) {
 });
 
 test('basic function test', function(t) {
-  t.plan(3);
-  var mixin = mixinable();
-  t.is(typeof mixin, 'function', 'mixinable creates a mixin function');
-  var create = mixin();
-  t.is(typeof create, 'function', 'mixin creates a create function');
+  t.plan(2);
+  var create = mixinable();
+  t.is(typeof create, 'function', 'mixinable creates a create function');
   var result = create();
   t.truthy(result, 'create returns something');
 });
 
 test('constructor support test', function(t) {
-  t.plan(4);
+  t.plan(3);
   var arg = 1;
-  mixinable({
-    constructor: function(_arg) {
-      t.is(_arg, arg, 'facade receives correct arg');
+  mixinable({}, [
+    function(_arg) {
+      t.is(_arg, arg, '1st implementation receives correct arg');
     },
-  })(
-    {
-      constructor: function(_arg) {
-        t.is(_arg, arg, '1st implementation receives correct arg');
-      },
+    function(_arg) {
+      t.is(_arg, arg, '2nd implementation receives correct arg');
     },
-    {
-      constructor: function(_arg) {
-        t.is(_arg, arg, '2nd implementation receives correct arg');
-      },
+    function(_arg) {
+      t.is(_arg, arg, '3rd implementation receives correct arg');
     },
-    {
-      constructor: function(_arg) {
-        t.is(_arg, arg, '3rd implementation receives correct arg');
-      },
-    }
-  )(arg);
+  ])(arg);
 });
 
 test('inheritance test', function(t) {
-  t.plan(15);
+  t.plan(8);
   var arg = 1;
-  function Strategy(_arg) {
-    t.pass('strategy constructor is being called');
-    t.is(_arg, arg, 'strategy constructor receives correct arg');
-    t.true(this instanceof Strategy, 'strategy inherits correctly');
-    t.true(
-      Strategy.prototype.isPrototypeOf(this),
-      'strategy prototype chain is set up'
-    );
-  }
-  Strategy.prototype = {
-    foo: function(functions, _arg) {
-      t.is(_arg, arg, 'strategy definition receives correct arg');
-      t.true(this instanceof Strategy, 'strategy inherits correctly');
-      t.true(
-        Strategy.prototype.isPrototypeOf(this),
-        'strategy prototype chain is set up'
-      );
-      functions.forEach(function(fn) {
-        fn(_arg);
-      });
-    },
-  };
   function Implementation(_arg) {
     t.pass('implementation constructor is being called');
     t.is(_arg, arg, 'implementation constructor receives correct arg');
@@ -111,32 +77,41 @@ test('inheritance test', function(t) {
       );
     },
   };
-  var instance = mixinable(Strategy)(Implementation)(arg);
+  var instance = mixinable({ foo: mixinable.override }, [Implementation])(arg);
   instance.foo(arg);
 });
 
 test('callable helper test', function(t) {
   t.plan(2);
   var arg = 1;
-  var instance = mixinable({
-    foo: mixinable.callable,
-  })(
+  var instance = mixinable(
     {
-      foo: function() {
-        t.fail('1st implementation should not be called');
-      },
+      foo: mixinable.callable,
     },
-    {
-      foo: function() {
-        t.fail('2nd implementation should not be called');
+    [
+      function() {
+        Object.assign(this, {
+          foo: function() {
+            t.fail('1st implementation should not be called');
+          },
+        });
       },
-    },
-    {
-      foo: function(_arg) {
-        t.pass('3rd implementation is being called');
-        t.is(_arg, arg, '3rd implementation receives correct arg');
+      function() {
+        Object.assign(this, {
+          foo: function() {
+            t.fail('2nd implementation should not be called');
+          },
+        });
       },
-    }
+      function() {
+        Object.assign(this, {
+          foo: function(_arg) {
+            t.pass('3rd implementation is being called');
+            t.is(_arg, arg, '3rd implementation receives correct arg');
+          },
+        });
+      },
+    ]
   )();
   instance.foo(arg);
 });
@@ -144,25 +119,34 @@ test('callable helper test', function(t) {
 test('override helper test', function(t) {
   t.plan(2);
   var arg = 1;
-  var instance = mixinable({
-    foo: mixinable.override,
-  })(
+  var instance = mixinable(
     {
-      foo: function() {
-        t.fail('1st implementation should not be called');
-      },
+      foo: mixinable.override,
     },
-    {
-      foo: function() {
-        t.fail('2nd implementation should not be called');
+    [
+      function() {
+        Object.assign(this, {
+          foo: function() {
+            t.fail('1st implementation should not be called');
+          },
+        });
       },
-    },
-    {
-      foo: function(_arg) {
-        t.pass('3rd implementation is being called');
-        t.is(_arg, arg, '3rd implementation receives correct arg');
+      function() {
+        Object.assign(this, {
+          foo: function() {
+            t.fail('2nd implementation should not be called');
+          },
+        });
       },
-    }
+      function() {
+        Object.assign(this, {
+          foo: function(_arg) {
+            t.pass('3rd implementation is being called');
+            t.is(_arg, arg, '3rd implementation receives correct arg');
+          },
+        });
+      },
+    ]
   )();
   instance.foo(arg);
 });
@@ -171,42 +155,51 @@ test('sync parallel helper test', function(t) {
   t.plan(9);
   var arg = 1;
   var ctr = 0;
-  var instance = mixinable({
-    foo: mixinable.parallel,
-  })(
+  var instance = mixinable(
     {
-      foo: function(_arg) {
-        t.is(_arg, arg, '1st implementation receives correct arg');
-        t.is(ctr, 0, '1st implementation is being called first');
-        this.increment();
-      },
-      increment: function() {
-        t.pass('1st private method is being called');
-        ++ctr;
-      },
+      foo: mixinable.parallel,
     },
-    {
-      foo: function(_arg) {
-        t.is(_arg, arg, '2nd implementation receives correct arg');
-        t.is(ctr, 1, '2nd implementation is being called second');
-        this.increment();
+    [
+      function() {
+        Object.assign(this, {
+          foo: function(_arg) {
+            t.is(_arg, arg, '1st implementation receives correct arg');
+            t.is(ctr, 0, '1st implementation is being called first');
+            this.increment();
+          },
+          increment: function() {
+            t.pass('1st private method is being called');
+            ++ctr;
+          },
+        });
       },
-      increment: function() {
-        t.pass('2nd private method is being called');
-        ++ctr;
+      function() {
+        Object.assign(this, {
+          foo: function(_arg) {
+            t.is(_arg, arg, '2nd implementation receives correct arg');
+            t.is(ctr, 1, '2nd implementation is being called second');
+            this.increment();
+          },
+          increment: function() {
+            t.pass('2nd private method is being called');
+            ++ctr;
+          },
+        });
       },
-    },
-    {
-      foo: function(_arg) {
-        t.is(_arg, arg, '3rd implementation receives correct arg');
-        t.is(ctr, 2, '3rd implementation is being called third');
-        this.increment();
+      function() {
+        Object.assign(this, {
+          foo: function(_arg) {
+            t.is(_arg, arg, '3rd implementation receives correct arg');
+            t.is(ctr, 2, '3rd implementation is being called third');
+            this.increment();
+          },
+          increment: function() {
+            t.pass('3rd private method is being called');
+            ++ctr;
+          },
+        });
       },
-      increment: function() {
-        t.pass('3rd private method is being called');
-        ++ctr;
-      },
-    }
+    ]
   )();
   instance.foo(arg);
 });
@@ -215,63 +208,72 @@ test('async parallel helper test', function(t) {
   t.plan(14);
   var arg = 1;
   var ctr = 0;
-  var instance = mixinable({
-    foo: mixinable.parallel,
-  })(
+  var instance = mixinable(
     {
-      foo: function(_arg) {
-        t.is(_arg, arg, '1st implementation receives correct arg');
-        t.is(ctr, 0, '1st implementation is being called instantaneously');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                this.increment();
-                resolve(ctr);
-              }.bind(this),
-              10
-            );
-          }.bind(this)
-        );
-      },
-      increment: function() {
-        t.pass('1st private method is being called');
-        ++ctr;
-      },
+      foo: mixinable.parallel,
     },
-    {
-      foo: function(_arg) {
-        t.is(_arg, arg, '2nd implementation receives correct arg');
-        t.is(ctr, 0, '2nd implementation is being called instantaneously');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                this.increment();
-                resolve(ctr);
-              }.bind(this),
-              5
+    [
+      function() {
+        Object.assign(this, {
+          foo: function(_arg) {
+            t.is(_arg, arg, '1st implementation receives correct arg');
+            t.is(ctr, 0, '1st implementation is being called instantaneously');
+            return new Promise(
+              function(resolve) {
+                setTimeout(
+                  function() {
+                    this.increment();
+                    resolve(ctr);
+                  }.bind(this),
+                  10
+                );
+              }.bind(this)
             );
-          }.bind(this)
-        );
+          },
+          increment: function() {
+            t.pass('1st private method is being called');
+            ++ctr;
+          },
+        });
       },
-      increment: function() {
-        t.pass('2nd private method is being called');
-        ++ctr;
+      function() {
+        Object.assign(this, {
+          foo: function(_arg) {
+            t.is(_arg, arg, '2nd implementation receives correct arg');
+            t.is(ctr, 0, '2nd implementation is being called instantaneously');
+            return new Promise(
+              function(resolve) {
+                setTimeout(
+                  function() {
+                    this.increment();
+                    resolve(ctr);
+                  }.bind(this),
+                  5
+                );
+              }.bind(this)
+            );
+          },
+          increment: function() {
+            t.pass('2nd private method is being called');
+            ++ctr;
+          },
+        });
       },
-    },
-    {
-      foo: function(_arg) {
-        t.is(_arg, arg, '3rd implementation receives correct arg');
-        t.is(ctr, 0, '3rd implementation is being called instantaneously');
-        this.increment();
-        return ctr;
+      function() {
+        Object.assign(this, {
+          foo: function(_arg) {
+            t.is(_arg, arg, '3rd implementation receives correct arg');
+            t.is(ctr, 0, '3rd implementation is being called instantaneously');
+            this.increment();
+            return ctr;
+          },
+          increment: function() {
+            t.pass('3rd private method is being called');
+            ++ctr;
+          },
+        });
       },
-      increment: function() {
-        t.pass('3rd private method is being called');
-        ++ctr;
-      },
-    }
+    ]
   )();
   var result = instance.foo(arg);
   t.true(result instanceof Promise, 'received result is a promise');
@@ -286,42 +288,51 @@ test('async parallel helper test', function(t) {
 test('sync pipe helper test', function(t) {
   t.plan(10);
   var arg = 1;
-  var instance = mixinable({
-    foo: mixinable.pipe,
-  })(
+  var instance = mixinable(
     {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 0, '1st implementation receives inital value');
-        t.is(_arg, arg, '1st implementation receives correct arg');
-        return this.increment(ctr);
-      },
-      increment: function(ctr) {
-        t.pass('1st private method is being called');
-        return ++ctr;
-      },
+      foo: mixinable.pipe,
     },
-    {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 1, "2nd implementation receives 1st's result");
-        t.is(_arg, arg, '2nd implementation receives correct arg');
-        return this.increment(ctr);
+    [
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 0, '1st implementation receives inital value');
+            t.is(_arg, arg, '1st implementation receives correct arg');
+            return this.increment(ctr);
+          },
+          increment: function(ctr) {
+            t.pass('1st private method is being called');
+            return ++ctr;
+          },
+        });
       },
-      increment: function(ctr) {
-        t.pass('2nd private method is being called');
-        return ++ctr;
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 1, "2nd implementation receives 1st's result");
+            t.is(_arg, arg, '2nd implementation receives correct arg');
+            return this.increment(ctr);
+          },
+          increment: function(ctr) {
+            t.pass('2nd private method is being called');
+            return ++ctr;
+          },
+        });
       },
-    },
-    {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 2, "3rd implementation receives 2nd's result");
-        t.is(_arg, arg, '3rd implementation receives correct arg');
-        return this.increment(ctr);
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 2, "3rd implementation receives 2nd's result");
+            t.is(_arg, arg, '3rd implementation receives correct arg');
+            return this.increment(ctr);
+          },
+          increment: function(ctr) {
+            t.pass('3rd private method is being called');
+            return ++ctr;
+          },
+        });
       },
-      increment: function(ctr) {
-        t.pass('3rd private method is being called');
-        return ++ctr;
-      },
-    }
+    ]
   )();
   t.is(instance.foo(0, arg), 3, 'correct result received');
 });
@@ -329,60 +340,69 @@ test('sync pipe helper test', function(t) {
 test('async pipe helper test', function(t) {
   t.plan(11);
   var arg = 1;
-  var instance = mixinable({
-    foo: mixinable.pipe,
-  })(
+  var instance = mixinable(
     {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 0, '1st implementation receives inital value');
-        t.is(_arg, arg, '1st implementation receives correct arg');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                resolve(this.increment(ctr));
-              }.bind(this),
-              10
-            );
-          }.bind(this)
-        );
-      },
-      increment: function(ctr) {
-        t.pass('1st private method is being called');
-        return ++ctr;
-      },
+      foo: mixinable.pipe,
     },
-    {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 1, "2nd implementation receives 1st's result");
-        t.is(_arg, arg, '2nd implementation receives correct arg');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                resolve(this.increment(ctr));
-              }.bind(this),
-              5
+    [
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 0, '1st implementation receives inital value');
+            t.is(_arg, arg, '1st implementation receives correct arg');
+            return new Promise(
+              function(resolve) {
+                setTimeout(
+                  function() {
+                    resolve(this.increment(ctr));
+                  }.bind(this),
+                  10
+                );
+              }.bind(this)
             );
-          }.bind(this)
-        );
+          },
+          increment: function(ctr) {
+            t.pass('1st private method is being called');
+            return ++ctr;
+          },
+        });
       },
-      increment: function(ctr) {
-        t.pass('2nd private method is being called');
-        return ++ctr;
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 1, "2nd implementation receives 1st's result");
+            t.is(_arg, arg, '2nd implementation receives correct arg');
+            return new Promise(
+              function(resolve) {
+                setTimeout(
+                  function() {
+                    resolve(this.increment(ctr));
+                  }.bind(this),
+                  5
+                );
+              }.bind(this)
+            );
+          },
+          increment: function(ctr) {
+            t.pass('2nd private method is being called');
+            return ++ctr;
+          },
+        });
       },
-    },
-    {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 2, "3rd implementation receives 2nd's result");
-        t.is(_arg, arg, '3rd implementation receives correct arg');
-        return this.increment(ctr);
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 2, "3rd implementation receives 2nd's result");
+            t.is(_arg, arg, '3rd implementation receives correct arg');
+            return this.increment(ctr);
+          },
+          increment: function(ctr) {
+            t.pass('3rd private method is being called');
+            return ++ctr;
+          },
+        });
       },
-      increment: function(ctr) {
-        t.pass('3rd private method is being called');
-        return ++ctr;
-      },
-    }
+    ]
   )();
   var result = instance.foo(0, arg);
   t.true(result instanceof Promise, 'received result is a promise');
@@ -394,42 +414,51 @@ test('async pipe helper test', function(t) {
 test('sync compose helper test', function(t) {
   t.plan(10);
   var arg = 1;
-  var instance = mixinable({
-    foo: mixinable.compose,
-  })(
+  var instance = mixinable(
     {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 2, "1st implementation receives 2nd's result");
-        t.is(_arg, arg, '1st implementation receives correct arg');
-        return this.increment(ctr);
-      },
-      increment: function(ctr) {
-        t.pass('1st private method is being called');
-        return ++ctr;
-      },
+      foo: mixinable.compose,
     },
-    {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 1, "2nd implementation receives 1st's result");
-        t.is(_arg, arg, '2nd implementation receives correct arg');
-        return this.increment(ctr);
+    [
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 2, "1st implementation receives 2nd's result");
+            t.is(_arg, arg, '1st implementation receives correct arg');
+            return this.increment(ctr);
+          },
+          increment: function(ctr) {
+            t.pass('1st private method is being called');
+            return ++ctr;
+          },
+        });
       },
-      increment: function(ctr) {
-        t.pass('2nd private method is being called');
-        return ++ctr;
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 1, "2nd implementation receives 1st's result");
+            t.is(_arg, arg, '2nd implementation receives correct arg');
+            return this.increment(ctr);
+          },
+          increment: function(ctr) {
+            t.pass('2nd private method is being called');
+            return ++ctr;
+          },
+        });
       },
-    },
-    {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 0, '3rd implementation receives inital value');
-        t.is(_arg, arg, '3rd implementation receives correct arg');
-        return this.increment(ctr);
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 0, '3rd implementation receives inital value');
+            t.is(_arg, arg, '3rd implementation receives correct arg');
+            return this.increment(ctr);
+          },
+          increment: function(ctr) {
+            t.pass('3rd private method is being called');
+            return ++ctr;
+          },
+        });
       },
-      increment: function(ctr) {
-        t.pass('3rd private method is being called');
-        return ++ctr;
-      },
-    }
+    ]
   )();
   t.is(instance.foo(0, arg), 3, 'correct result received');
 });
@@ -437,60 +466,69 @@ test('sync compose helper test', function(t) {
 test('async compose helper test', function(t) {
   t.plan(11);
   var arg = 1;
-  var instance = mixinable({
-    foo: mixinable.compose,
-  })(
+  var instance = mixinable(
     {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 2, "1st implementation receives 2nd's result");
-        t.is(_arg, arg, '1st implementation receives correct arg');
-        return this.increment(ctr);
-      },
-      increment: function(ctr) {
-        t.pass('1st private method is being called');
-        return ++ctr;
-      },
+      foo: mixinable.compose,
     },
-    {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 1, "2nd implementation receives 1st's result");
-        t.is(_arg, arg, '2nd implementation receives correct arg');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                resolve(this.increment(ctr));
-              }.bind(this),
-              5
+    [
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 2, "1st implementation receives 2nd's result");
+            t.is(_arg, arg, '1st implementation receives correct arg');
+            return this.increment(ctr);
+          },
+          increment: function(ctr) {
+            t.pass('1st private method is being called');
+            return ++ctr;
+          },
+        });
+      },
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 1, "2nd implementation receives 1st's result");
+            t.is(_arg, arg, '2nd implementation receives correct arg');
+            return new Promise(
+              function(resolve) {
+                setTimeout(
+                  function() {
+                    resolve(this.increment(ctr));
+                  }.bind(this),
+                  5
+                );
+              }.bind(this)
             );
-          }.bind(this)
-        );
+          },
+          increment: function(ctr) {
+            t.pass('2nd private method is being called');
+            return ++ctr;
+          },
+        });
       },
-      increment: function(ctr) {
-        t.pass('2nd private method is being called');
-        return ++ctr;
-      },
-    },
-    {
-      foo: function(ctr, _arg) {
-        t.is(ctr, 0, '3rd implementation receives inital value');
-        t.is(_arg, arg, '3rd implementation receives correct arg');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                resolve(this.increment(ctr));
-              }.bind(this),
-              10
+      function() {
+        Object.assign(this, {
+          foo: function(ctr, _arg) {
+            t.is(ctr, 0, '3rd implementation receives inital value');
+            t.is(_arg, arg, '3rd implementation receives correct arg');
+            return new Promise(
+              function(resolve) {
+                setTimeout(
+                  function() {
+                    resolve(this.increment(ctr));
+                  }.bind(this),
+                  10
+                );
+              }.bind(this)
             );
-          }.bind(this)
-        );
+          },
+          increment: function(ctr) {
+            t.pass('3rd private method is being called');
+            return ++ctr;
+          },
+        });
       },
-      increment: function(ctr) {
-        t.pass('3rd private method is being called');
-        return ++ctr;
-      },
-    }
+    ]
   )();
   var result = instance.foo(0, arg);
   t.true(result instanceof Promise, 'received result is a promise');
@@ -501,17 +539,24 @@ test('async compose helper test', function(t) {
 
 test('async helper test', function(t) {
   t.plan(4);
-  var instance = mixinable({
-    foo: async.override,
-    bar: async.parallel,
-    baz: async.pipe,
-    qux: async.compose,
-  })({
-    foo: function() {},
-    bar: function() {},
-    baz: function() {},
-    qux: function() {},
-  })();
+  var instance = mixinable(
+    {
+      foo: async.override,
+      bar: async.parallel,
+      baz: async.pipe,
+      qux: async.compose,
+    },
+    [
+      function() {
+        Object.assign(this, {
+          foo: function() {},
+          bar: function() {},
+          baz: function() {},
+          qux: function() {},
+        });
+      },
+    ]
+  )();
   t.true(instance.foo() instanceof Promise, 'override result is a promise');
   t.true(instance.bar() instanceof Promise, 'parallel result is a promise');
   t.true(instance.baz() instanceof Promise, 'pipe result is a promise');
@@ -520,29 +565,36 @@ test('async helper test', function(t) {
 
 test('sync helper test', function(t) {
   t.plan(5);
-  var instance = mixinable({
-    foo: sync.override,
-    bar: sync.parallel,
-    baz: sync.pipe,
-    qux: sync.sequence,
-    quz: sync.compose,
-  })({
-    foo: function() {
-      return Promise.resolve();
+  var instance = mixinable(
+    {
+      foo: sync.override,
+      bar: sync.parallel,
+      baz: sync.pipe,
+      qux: sync.sequence,
+      quz: sync.compose,
     },
-    bar: function() {
-      return Promise.resolve();
-    },
-    baz: function() {
-      return Promise.resolve();
-    },
-    qux: function() {
-      return Promise.resolve();
-    },
-    quz: function() {
-      return Promise.resolve();
-    },
-  })();
+    [
+      function() {
+        Object.assign(this, {
+          foo: function() {
+            return Promise.resolve();
+          },
+          bar: function() {
+            return Promise.resolve();
+          },
+          baz: function() {
+            return Promise.resolve();
+          },
+          qux: function() {
+            return Promise.resolve();
+          },
+          quz: function() {
+            return Promise.resolve();
+          },
+        });
+      },
+    ]
+  )();
   t.throws(
     instance.foo.bind(instance),
     'got promise in sync mode',
@@ -572,65 +624,58 @@ test('sync helper test', function(t) {
 
 test('internal mixin method test', function(t) {
   t.plan(2);
-  var create = mixinable({
-    foo: mixinable.override,
-    bar: mixinable.override,
-  })(
+  var create = mixinable(
     {
-      foo: function() {
-        t.pass('first method is being called');
-        this.bar();
-      },
+      foo: mixinable.override,
+      bar: mixinable.override,
     },
-    {
-      bar: function() {
-        t.pass('second method is being called');
+    [
+      function() {
+        Object.assign(this, {
+          foo: function() {
+            t.pass('first method is being called');
+            this.bar();
+          },
+        });
       },
-    }
+      function() {
+        Object.assign(this, {
+          bar: function() {
+            t.pass('second method is being called');
+          },
+        });
+      },
+    ]
   );
   create().foo();
 });
 
 test('autobinding test', function(t) {
   return new Promise(function(resolve) {
-    var create = mixinable({
-      foo: mixinable.override,
-      bar: mixinable.override,
-    })({
-      foo: function() {
-        t.pass('first method is being called');
-        setTimeout(this.bar, 5);
+    var create = mixinable(
+      {
+        foo: mixinable.override,
+        bar: mixinable.override,
       },
-      bar: function() {
-        t.pass('second method is being called');
-        setTimeout(this.baz, 5);
-      },
-      baz: function() {
-        t.pass('third method is being called');
-        t.truthy(
-          this.constructor.prototype.baz.hasOwnProperty('prototype'),
-          'third mixin prototype method is unbound'
-        );
-        t.falsy(
-          this.baz.hasOwnProperty('prototype'),
-          'third mixin method is bound'
-        );
-        setTimeout(this.qux, 5);
-      },
-      qux: function() {
-        t.pass('fourth method is being called');
-        t.truthy(
-          this.constructor.prototype.qux.hasOwnProperty('prototype'),
-          'fourth mixin prototype method is unbound'
-        );
-        t.falsy(
-          this.qux.hasOwnProperty('prototype'),
-          'fourth mixin method is bound'
-        );
-        resolve();
-      },
-    });
-    var instance = create();
-    instance.foo();
+      [
+        function() {
+          Object.assign(this, {
+            foo: function() {
+              t.pass('first method is being called');
+              setTimeout(this.bar, 5);
+            },
+            bar: function() {
+              t.pass('second method is being called');
+              setTimeout(this.baz, 5);
+            },
+            baz: function() {
+              t.pass('third method is being called');
+              resolve();
+            },
+          });
+        },
+      ]
+    );
+    create().foo();
   });
 });
