@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="4.0.0"></a>
+# [4.0.0](https://github.com/untool/mixinable/compare/v3.1.2...v4.0.0) (2018-08-17)
+
+
+### Code Refactoring
+
+* significantly simplify implementation ([573ead8](https://github.com/untool/mixinable/commit/573ead8))
+
+
+### BREAKING CHANGES
+
+* remove function/class/constructor support for
+strategies definition, remove hash support for mixin definitions
+
+
+
 <a name="3.1.2"></a>
 ## [3.1.2](https://github.com/untool/mixinable/compare/v3.1.1...v3.1.2) (2018-07-24)
 
