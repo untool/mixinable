@@ -11,15 +11,17 @@ module.exports = exports = function define(strategies, mixins) {
     var mixinstances = (mixins || []).map(function(Mixin) {
       return new (bindArgs(Mixin, args))();
     });
+    var intercept = instrument(this);
     Object.keys(strategies || {}).forEach(function(method) {
-      this[method] = strategies[method].bind(
-        this,
-        mixinstances.reduce(function(functions, mixinstance) {
-          if (isFunction(mixinstance[method])) {
-            functions.push(mixinstance[method].bind(mixinstance));
-          }
-          return functions;
-        }, [])
+      var functions = mixinstances.reduce(function(functions, mixinstance) {
+        if (isFunction(mixinstance[method])) {
+          functions.push(mixinstance[method].bind(mixinstance));
+        }
+        return functions;
+      }, []);
+      this[method] = intercept(
+        method,
+        strategies[method].bind(this, functions)
       );
       mixinstances.forEach(function(mixinstance) {
         mixinstance[method] = this[method];
@@ -60,46 +62,46 @@ exports.pipe = function pipe(functions) {
 
 exports.compose = function compose(functions) {
   var args = argsToArray(arguments).slice(1);
-  var fn = exports.pipe.bind(null, functions.slice().reverse());
+  var fn = exports.pipe.bind(this, functions.slice().reverse());
   return fn.apply(null, args);
 };
 
 exports.async = {
   callable: function callableAsync() {
-    return asynchronize(exports.override).apply(null, arguments);
+    return asynchronize(exports.override).apply(this, arguments);
   },
   override: function overrideAsync() {
-    return asynchronize(exports.override).apply(null, arguments);
+    return asynchronize(exports.override).apply(this, arguments);
   },
   parallel: function parallelAsync() {
-    return asynchronize(exports.parallel).apply(null, arguments);
+    return asynchronize(exports.parallel).apply(this, arguments);
   },
   pipe: function pipeAsync() {
-    return asynchronize(exports.pipe).apply(null, arguments);
+    return asynchronize(exports.pipe).apply(this, arguments);
   },
   compose: function composeAsync() {
-    return asynchronize(exports.compose).apply(null, arguments);
+    return asynchronize(exports.compose).apply(this, arguments);
   },
 };
 
 exports.sync = {
   callable: function callableSync() {
-    return synchronize(exports.override).apply(null, arguments);
+    return synchronize(exports.override).apply(this, arguments);
   },
   override: function overrideSync() {
-    return synchronize(exports.override).apply(null, arguments);
+    return synchronize(exports.override).apply(this, arguments);
   },
   sequence: function sequenceSync() {
-    return synchronize(exports.parallel).apply(null, arguments);
+    return synchronize(exports.parallel).apply(this, arguments);
   },
   parallel: function parallelSync() {
-    return synchronize(exports.parallel).apply(null, arguments);
+    return synchronize(exports.parallel).apply(this, arguments);
   },
   pipe: function pipeSync() {
-    return synchronize(exports.pipe).apply(null, arguments);
+    return synchronize(exports.pipe).apply(this, arguments);
   },
   compose: function composeSync() {
-    return synchronize(exports.compose).apply(null, arguments);
+    return synchronize(exports.compose).apply(this, arguments);
   },
 };
 
@@ -139,5 +141,65 @@ function synchronize(fn) {
       throw new Error('got promise in sync mode');
     }
     return obj;
+  };
+}
+
+// instrumentation
+
+function instrument(mixinable) {
+  var queues = {};
+  mixinable.events = {
+    on: function on(topic, fn) {
+      if (!queues[topic]) {
+        queues[topic] = [];
+      }
+      queues[topic].push(fn);
+    },
+    off: function(topic, fn) {
+      if (queues[topic]) {
+        queues[topic].splice(queues[topic].indexOf(fn), 1);
+      }
+    },
+  };
+  return function intercept(method, implementation) {
+    function emit(suffix) {
+      var args = argsToArray(arguments).slice(1);
+      var topic = [method, suffix].join(':');
+      if (queues[topic]) {
+        queues[topic].slice().forEach(function(fn) {
+          fn.apply(null, args);
+        });
+      }
+    }
+    function onFulfilled(value) {
+      emit('success', value), emit('finish');
+      return value;
+    }
+    function onRejected(error) {
+      emit('error', error), emit('finish');
+      throw error;
+    }
+    function execute() {
+      var args = argsToArray(arguments);
+      emit('start', args);
+      try {
+        var result = implementation.apply(null, args);
+        if (isPromise(result)) {
+          return result.then(onFulfilled, onRejected);
+        } else {
+          return onFulfilled(result);
+        }
+      } catch (error) {
+        onRejected(error);
+      }
+    }
+    try {
+      return Object.defineProperty(execute, 'name', {
+        value: implementation.name,
+        writable: true,
+      });
+    } catch (_) {
+      return execute;
+    }
   };
 }
