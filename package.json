@@ -10,8 +10,6 @@
     "release": "standard-version",
     "update": "yarn upgrade-interactive --latest",
     "reset": "git clean -dfx && yarn",
-    "commitmsg": "commitlint -e $GIT_PARAMS",
-    "precommit": "lint-staged",
     "postrelease": "git push --follow-tags; npm publish"
   },
   "publishConfig": {
@@ -99,6 +97,12 @@
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -e $GIT_PARAMS",
+      "pre-commit": "lint-staged"
     }
   }
 }
