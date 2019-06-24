@@ -59,7 +59,7 @@ test('inheritance test', function(t) {
     t.is(_arg, arg, 'implementation constructor receives correct arg');
     t.true(this instanceof Implementation, 'implementation inherits correctly');
     t.true(
-      Implementation.prototype.isPrototypeOf(this),
+      Object.prototype.isPrototypeOf.call(Implementation.prototype, this),
       'implementation prototype chain is set up'
     );
   }
@@ -72,7 +72,7 @@ test('inheritance test', function(t) {
         'implementation inherits correctly'
       );
       t.true(
-        Implementation.prototype.isPrototypeOf(this),
+        Object.prototype.isPrototypeOf.call(Implementation.prototype, this),
         'implementation prototype chain is set up'
       );
     },
