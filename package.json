@@ -41,18 +41,8 @@
   },
   "renovate": {
     "extends": [
-      "config:base"
-    ],
-    "ignoreDeps": [
-      "prettier"
-    ],
-    "lockFileMaintenance": {
-      "enabled": true
-    },
-    "pinVersions": false,
-    "prCreation": "not-pending",
-    "semanticCommits": true,
-    "semanticPrefix": "chore:"
+      "github>untool/renovate-config:base"
+    ]
   },
   "prettier": {
     "trailingComma": "es5",
