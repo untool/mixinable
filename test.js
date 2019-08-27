@@ -13,7 +13,7 @@ const {
   compose,
 } = mixinable;
 
-test('exports test', function(t) {
+test('exports test', (t) => {
   t.plan(17);
   t.is(typeof define, 'function', 'main export is a function');
   t.is(typeof callable, 'function', 'callable is a function');
@@ -34,7 +34,7 @@ test('exports test', function(t) {
   t.is(typeof sync.compose, 'function', 'sync.compose is a function');
 });
 
-test('basic function test', function(t) {
+test('basic function test', (t) => {
   t.plan(2);
   const create = define();
   t.is(typeof create, 'function', 'mixinable creates a create function');
@@ -42,35 +42,51 @@ test('basic function test', function(t) {
   t.truthy(result, 'create returns something');
 });
 
-test('constructor support test', function(t) {
+test('constructor support test', (t) => {
   t.plan(3);
   const arg = 1;
   define({}, [
-    class X {
-      constructor(_arg) {
-        t.is(_arg, arg, '1st implementation receives correct arg');
+    class A {
+      /**
+       * @constructor
+       * @param {number} arg0
+       */
+      constructor(arg0) {
+        t.is(arg0, arg, '1st implementation receives correct arg');
       }
     },
-    class X {
-      constructor(_arg) {
-        t.is(_arg, arg, '2nd implementation receives correct arg');
+    class A {
+      /**
+       * @constructor
+       * @param {number} arg0
+       */
+      constructor(arg0) {
+        t.is(arg0, arg, '2nd implementation receives correct arg');
       }
     },
-    class X {
-      constructor(_arg) {
-        t.is(_arg, arg, '3rd implementation receives correct arg');
+    class A {
+      /**
+       * @constructor
+       * @param {number} arg0
+       */
+      constructor(arg0) {
+        t.is(arg0, arg, '3rd implementation receives correct arg');
       }
     },
   ])(arg);
 });
 
-test('inheritance test', function(t) {
+test('inheritance test', (t) => {
   t.plan(8);
   const arg = 1;
   class Implementation {
-    constructor(_arg) {
+    /**
+     * @constructor
+     * @param {number} arg0
+     */
+    constructor(arg0) {
       t.pass('implementation constructor is being called');
-      t.is(_arg, arg, 'implementation constructor receives correct arg');
+      t.is(arg0, arg, 'implementation constructor receives correct arg');
       t.true(
         this instanceof Implementation,
         'implementation inherits correctly'
@@ -80,9 +96,13 @@ test('inheritance test', function(t) {
         'implementation prototype chain is set up'
       );
     }
-    foo(_arg) {
+
+    /**
+     * @param {number} arg0
+     */
+    foo(arg0) {
       t.pass('implementation is being called');
-      t.is(_arg, arg, 'implementation receives correct arg');
+      t.is(arg0, arg, 'implementation receives correct arg');
       t.true(
         this instanceof Implementation,
         'implementation inherits correctly'
@@ -93,16 +113,18 @@ test('inheritance test', function(t) {
       );
     }
   }
-  const instance = define({ foo: override }, [Implementation])(arg);
+  const strategies = { foo: override };
+  const instance = define(strategies, [Implementation])(arg);
   instance.foo(arg);
 });
 
-test('callable helper test', function(t) {
+test('callable helper test', (t) => {
   t.plan(2);
   const arg = 1;
-  const instance = define({
+  const strategies = {
     foo: callable,
-  }, [
+  };
+  const instance = define(strategies, [
     class X {
       foo() {
         t.fail('1st implementation should not be called');
@@ -114,21 +136,25 @@ test('callable helper test', function(t) {
       }
     },
     class X {
-      foo(_arg) {
+      /**
+       * @param {number} arg0
+       */
+      foo(arg0) {
         t.pass('3rd implementation is being called');
-        t.is(_arg, arg, '3rd implementation receives correct arg');
+        t.is(arg0, arg, '3rd implementation receives correct arg');
       }
     },
   ])();
   instance.foo(arg);
 });
 
-test('override helper test', function(t) {
+test('override helper test', (t) => {
   t.plan(2);
   const arg = 1;
-  const instance = define({
+  const strategies = {
     foo: override,
-  }, [
+  };
+  const instance = define(strategies, [
     class X {
       foo() {
         t.fail('1st implementation should not be called');
@@ -140,25 +166,32 @@ test('override helper test', function(t) {
       }
     },
     class X {
-      foo(_arg) {
+      /**
+       * @param {number} arg0
+       */
+      foo(arg0) {
         t.pass('3rd implementation is being called');
-        t.is(_arg, arg, '3rd implementation receives correct arg');
+        t.is(arg0, arg, '3rd implementation receives correct arg');
       }
     },
   ])();
   instance.foo(arg);
 });
 
-test('sync parallel helper test', function(t) {
+test('sync parallel helper test', (t) => {
   t.plan(9);
   const arg = 1;
   let ctr = 0;
-  const instance = define({
+  const strategies = {
     foo: parallel,
-  }, [
+  };
+  const instance = define(strategies, [
     class X {
-      foo(_arg) {
-        t.is(_arg, arg, '1st implementation receives correct arg');
+      /**
+       * @param {number} arg0
+       */
+      foo(arg0) {
+        t.is(arg0, arg, '1st implementation receives correct arg');
         t.is(ctr, 0, '1st implementation is being called first');
         this.increment();
       }
@@ -168,8 +201,11 @@ test('sync parallel helper test', function(t) {
       }
     },
     class X {
-      foo(_arg) {
-        t.is(_arg, arg, '2nd implementation receives correct arg');
+      /**
+       * @param {number} arg0
+       */
+      foo(arg0) {
+        t.is(arg0, arg, '2nd implementation receives correct arg');
         t.is(ctr, 1, '2nd implementation is being called second');
         this.increment();
       }
@@ -179,8 +215,11 @@ test('sync parallel helper test', function(t) {
       }
     },
     class X {
-      foo(_arg) {
-        t.is(_arg, arg, '3rd implementation receives correct arg');
+      /**
+       * @param {number} arg0
+       */
+      foo(arg0) {
+        t.is(arg0, arg, '3rd implementation receives correct arg');
         t.is(ctr, 2, '3rd implementation is being called third');
         this.increment();
       }
@@ -193,28 +232,27 @@ test('sync parallel helper test', function(t) {
   instance.foo(arg);
 });
 
-test('async parallel helper test', function(t) {
+test('async parallel helper test', (t) => {
   t.plan(14);
   const arg = 1;
   let ctr = 0;
-  const instance = define({
+  const strategies = {
     foo: parallel,
-  }, [
+  };
+  const instance = define(strategies, [
     class X {
-      foo(_arg) {
-        t.is(_arg, arg, '1st implementation receives correct arg');
+      /**
+       * @param {number} arg0
+       */
+      foo(arg0) {
+        t.is(arg0, arg, '1st implementation receives correct arg');
         t.is(ctr, 0, '1st implementation is being called instantaneously');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                this.increment();
-                resolve(ctr);
-              }.bind(this),
-              10
-            );
-          }.bind(this)
-        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            this.increment();
+            resolve(ctr);
+          }, 10);
+        });
       }
       increment() {
         t.pass('1st private method is being called');
@@ -222,20 +260,18 @@ test('async parallel helper test', function(t) {
       }
     },
     class X {
-      foo(_arg) {
-        t.is(_arg, arg, '2nd implementation receives correct arg');
+      /**
+       * @param {number} arg0
+       */
+      foo(arg0) {
+        t.is(arg0, arg, '2nd implementation receives correct arg');
         t.is(ctr, 0, '2nd implementation is being called instantaneously');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                this.increment();
-                resolve(ctr);
-              }.bind(this),
-              5
-            );
-          }.bind(this)
-        );
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            this.increment();
+            resolve(ctr);
+          }, 5);
+        });
       }
       increment() {
         t.pass('2nd private method is being called');
@@ -243,8 +279,11 @@ test('async parallel helper test', function(t) {
       }
     },
     class X {
-      foo(_arg) {
-        t.is(_arg, arg, '3rd implementation receives correct arg');
+      /**
+       * @param {number} arg0
+       */
+      foo(arg0) {
+        t.is(arg0, arg, '3rd implementation receives correct arg');
         t.is(ctr, 0, '3rd implementation is being called instantaneously');
         this.increment();
         return ctr;
@@ -257,7 +296,7 @@ test('async parallel helper test', function(t) {
   ])();
   const result = instance.foo(arg);
   t.true(result instanceof Promise, 'received result is a promise');
-  return result.then(function(result) {
+  return /** @type {Promise<number[]>} */ (result).then((result) => {
     t.is(result.length, 3, 'promise resolves to array with correct length');
     t.is(result[0], 3, '1st result has correct value');
     t.is(result[1], 2, '2nd result has correct value');
@@ -265,40 +304,62 @@ test('async parallel helper test', function(t) {
   });
 });
 
-test('sync pipe helper test', function(t) {
+test('sync pipe helper test', (t) => {
   t.plan(10);
   const arg = 1;
-  const instance = define({
+  const strategies = {
     foo: pipe,
-  }, [
+  };
+  const instance = define(strategies, [
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 0, '1st implementation receives inital value');
-        t.is(_arg, arg, '1st implementation receives correct arg');
+        t.is(arg1, arg, '1st implementation receives correct arg');
         return this.increment(ctr);
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('1st private method is being called');
         return ++ctr;
       }
     },
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 1, "2nd implementation receives 1st's result");
-        t.is(_arg, arg, '2nd implementation receives correct arg');
+        t.is(arg1, arg, '2nd implementation receives correct arg');
         return this.increment(ctr);
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('2nd private method is being called');
         return ++ctr;
       }
     },
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 2, "3rd implementation receives 2nd's result");
-        t.is(_arg, arg, '3rd implementation receives correct arg');
+        t.is(arg1, arg, '3rd implementation receives correct arg');
         return this.increment(ctr);
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('3rd private method is being called');
         return ++ctr;
@@ -308,58 +369,70 @@ test('sync pipe helper test', function(t) {
   t.is(instance.foo(0, arg), 3, 'correct result received');
 });
 
-test('async pipe helper test', function(t) {
+test('async pipe helper test', (t) => {
   t.plan(11);
   const arg = 1;
-  const instance = define({
+  const strategies = {
     foo: pipe,
-  }, [
+  };
+  const instance = define(strategies, [
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 0, '1st implementation receives inital value');
-        t.is(_arg, arg, '1st implementation receives correct arg');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                resolve(this.increment(ctr));
-              }.bind(this),
-              10
-            );
-          }.bind(this)
-        );
+        t.is(arg1, arg, '1st implementation receives correct arg');
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(this.increment(ctr));
+          }, 10);
+        });
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('1st private method is being called');
         return ++ctr;
       }
     },
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 1, "2nd implementation receives 1st's result");
-        t.is(_arg, arg, '2nd implementation receives correct arg');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                resolve(this.increment(ctr));
-              }.bind(this),
-              5
-            );
-          }.bind(this)
-        );
+        t.is(arg1, arg, '2nd implementation receives correct arg');
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(this.increment(ctr));
+          }, 5);
+        });
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('2nd private method is being called');
         return ++ctr;
       }
     },
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 2, "3rd implementation receives 2nd's result");
-        t.is(_arg, arg, '3rd implementation receives correct arg');
+        t.is(arg1, arg, '3rd implementation receives correct arg');
         return this.increment(ctr);
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('3rd private method is being called');
         return ++ctr;
@@ -368,45 +441,67 @@ test('async pipe helper test', function(t) {
   ])();
   const result = instance.foo(0, arg);
   t.true(result instanceof Promise, 'received result is a promise');
-  return result.then(function(result) {
+  return /** @type {Promise<number>} */ (result).then((result) => {
     t.is(result, 3, 'promise resolves to correct value');
   });
 });
 
-test('sync compose helper test', function(t) {
+test('sync compose helper test', (t) => {
   t.plan(10);
   const arg = 1;
-  const instance = define({
+  const strategies = {
     foo: compose,
-  }, [
+  };
+  const instance = define(strategies, [
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 2, "1st implementation receives 2nd's result");
-        t.is(_arg, arg, '1st implementation receives correct arg');
+        t.is(arg1, arg, '1st implementation receives correct arg');
         return this.increment(ctr);
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('1st private method is being called');
         return ++ctr;
       }
     },
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 1, "2nd implementation receives 1st's result");
-        t.is(_arg, arg, '2nd implementation receives correct arg');
+        t.is(arg1, arg, '2nd implementation receives correct arg');
         return this.increment(ctr);
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('2nd private method is being called');
         return ++ctr;
       }
     },
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 0, '3rd implementation receives inital value');
-        t.is(_arg, arg, '3rd implementation receives correct arg');
+        t.is(arg1, arg, '3rd implementation receives correct arg');
         return this.increment(ctr);
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('3rd private method is being called');
         return ++ctr;
@@ -416,58 +511,70 @@ test('sync compose helper test', function(t) {
   t.is(instance.foo(0, arg), 3, 'correct result received');
 });
 
-test('async compose helper test', function(t) {
+test('async compose helper test', (t) => {
   t.plan(11);
   const arg = 1;
-  const instance = define({
+  const strategies = {
     foo: compose,
-  }, [
+  };
+  const instance = define(strategies, [
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 2, "1st implementation receives 2nd's result");
-        t.is(_arg, arg, '1st implementation receives correct arg');
+        t.is(arg1, arg, '1st implementation receives correct arg');
         return this.increment(ctr);
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('1st private method is being called');
         return ++ctr;
       }
     },
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 1, "2nd implementation receives 1st's result");
-        t.is(_arg, arg, '2nd implementation receives correct arg');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                resolve(this.increment(ctr));
-              }.bind(this),
-              5
-            );
-          }.bind(this)
-        );
+        t.is(arg1, arg, '2nd implementation receives correct arg');
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(this.increment(ctr));
+          }, 5);
+        });
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('2nd private method is being called');
         return ++ctr;
       }
     },
     class X {
-      foo(ctr, _arg) {
+      /**
+       * @param {number} ctr
+       * @param {number} arg1
+       */
+      foo(ctr, arg1) {
         t.is(ctr, 0, '3rd implementation receives inital value');
-        t.is(_arg, arg, '3rd implementation receives correct arg');
-        return new Promise(
-          function(resolve) {
-            setTimeout(
-              function() {
-                resolve(this.increment(ctr));
-              }.bind(this),
-              10
-            );
-          }.bind(this)
-        );
+        t.is(arg1, arg, '3rd implementation receives correct arg');
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(this.increment(ctr));
+          }, 10);
+        });
       }
+      /**
+       * @param {number} ctr
+       */
       increment(ctr) {
         t.pass('3rd private method is being called');
         return ++ctr;
@@ -476,24 +583,33 @@ test('async compose helper test', function(t) {
   ])();
   const result = instance.foo(0, arg);
   t.true(result instanceof Promise, 'received result is a promise');
-  return result.then(function(result) {
+  return /** @type {Promise<number>} */ (result).then((result) => {
     t.is(result, 3, 'promise resolves to correct value');
   });
 });
 
-test('async helper test', function(t) {
+test('async helper test', (t) => {
   t.plan(4);
-  const instance = define({
+  const strategies = {
     foo: async.override,
     bar: async.parallel,
     baz: async.pipe,
     qux: async.compose,
-  }, [
+  };
+  const instance = define(strategies, [
     class X {
-      foo() {}
-      bar() {}
-      baz() {}
-      qux() {}
+      foo() {
+        /* empty */
+      }
+      bar() {
+        /* empty */
+      }
+      baz() {
+        /* empty */
+      }
+      qux() {
+        /* empty */
+      }
     },
   ])();
   t.true(instance.foo() instanceof Promise, 'override result is a promise');
@@ -502,15 +618,16 @@ test('async helper test', function(t) {
   t.true(instance.qux() instanceof Promise, 'compose result is a promise');
 });
 
-test('sync helper test', function(t) {
+test('sync helper test', (t) => {
   t.plan(5);
-  const instance = define({
+  const strategies = {
     foo: sync.override,
     bar: sync.parallel,
     baz: sync.pipe,
     qux: sync.sequence,
     quz: sync.compose,
-  }, [
+  };
+  const instance = define(strategies, [
     class X {
       foo() {
         return Promise.resolve();
@@ -556,16 +673,18 @@ test('sync helper test', function(t) {
   );
 });
 
-test('internal mixin method test', function(t) {
+test('internal mixin method test', (t) => {
   t.plan(2);
-  const create = define({
+  const strategies = {
     foo: override,
     bar: override,
-  }, [
+  };
+  const create = define(strategies, [
     class X {
       foo() {
         t.pass('first method is being called');
-        this.bar();
+        const ctx = /** @type {unknown} */ (this);
+        /** @type {ReturnType<typeof create>} */ (ctx).bar();
       }
     },
     class X {
@@ -577,12 +696,13 @@ test('internal mixin method test', function(t) {
   create().foo();
 });
 
-test('autobinding test', function(t) {
-  return new Promise(function(resolve) {
-    const create = define({
+test('autobinding test', (t) => {
+  return new Promise((resolve) => {
+    const strategies = {
       foo: override,
       bar: override,
-    }, [
+    };
+    const create = define(strategies, [
       class X {
         foo() {
           t.pass('first method is being called');
