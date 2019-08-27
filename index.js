@@ -1,52 +1,175 @@
 'use strict';
 
+/**
+ * @typedef {{
+ * [key: string]: (...args: any[]) => any;
+ * }} StrategiesObject
+ *
+ * @typedef {{
+ * new (...args: any[]): any;
+ * [name: string]: any;
+ * }} MixinClass
+ */
+
+/**
+ * @typedef {{
+ * <
+ *   S extends StrategiesObject,
+ *   M1 extends MixinClass,
+ *   M2 extends MixinClass,
+ *   M3 extends MixinClass,
+ *   P extends {
+ *     [key in K]: (
+ *       ...args: Parameters<(M1 & M2 & M3)['prototype'][key]>
+ *     ) => ReturnType<S[key]>;
+ *   },
+ *   K extends string = Extract<keyof S, string>
+ * >(
+ *   strategies?: S,
+ *   mixins?: [M1, M2, M3]
+ * ): (...args: ConstructorParameters<M1 & M2 & M3>) => P;
+ * <
+ *   S extends StrategiesObject,
+ *   M1 extends MixinClass,
+ *   M2 extends MixinClass,
+ *   P extends {
+ *     [key in K]: (
+ *       ...args: Parameters<(M1 & M2)['prototype'][key]>
+ *     ) => ReturnType<S[key]>;
+ *   },
+ *   K extends string = Extract<keyof S, string>
+ * >(
+ *   strategies?: S,
+ *   mixins?: [M1, M2]
+ * ): (...args: ConstructorParameters<M1 & M2>) => P;
+ * <
+ *  S extends StrategiesObject,
+ *  M1 extends MixinClass,
+ *  P extends {
+ *    [key in K]: (
+ *      ...args: Parameters<M1['prototype'][key]>
+ *    ) => ReturnType<S[key]>;
+ *  },
+ *  K extends string = Extract<keyof S, string>
+ * >(strategies?: S, mixins?: [M1]): (...args: ConstructorParameters<M1>) => P;
+ * <
+ *   S extends StrategiesObject,
+ *   M extends MixinClass,
+ *   P extends {
+ *     [key in K]: (
+ *       ...args: Parameters<M['prototype'][key]>
+ *     ) => ReturnType<S[key]>;
+ *   },
+ *   K extends Extract<keyof S, string>
+ * >(
+ *   strategies: S,
+ *   mixins: M[]
+ * ): (...args: ConstructorParameters<M>) => P;
+ * }} DefineFunction
+ */
+
 // main export
 
-exports.define = function define(strategies = null, mixins) {
+/**
+ * @template {StrategiesObject} S
+ * @template {MixinClass} M
+ * @template {{ [key in K]: (...args: Parameters<M['prototype'][key]>) => ReturnType<S[key]> }} P
+ * @template {Extract<keyof S, string>} K
+ * @param {S} strategies
+ * @param {M[]} mixins
+ * @returns {(...args: ConstructorParameters<M>) => P}
+ */
+function define(strategies = /** @type {S} */ ({}), mixins = []) {
   class Mixinable {
+    /**
+     * @constructor
+     * @param {ConstructorParameters<M>} args
+     */
     constructor(...args) {
-      const mixinstances = (mixins || []).map((Mixin) => {
+      /**
+       * @type {InstanceType<M>[]}
+       */
+      const mixinstances = mixins.map((Mixin) => {
+        // @ts-ignore
         return new Mixin(...args);
       });
-      Object.keys(strategies || {}).forEach((method) => {
-        this[method] = strategies[method].bind(
+      Object.keys(strategies).forEach((method) => {
+        /**
+         *
+         * @param {Array<(...args: any[]) => any>} functions
+         * @param {InstanceType<M>} mixinstance
+         */
+        const reducer = (functions, mixinstance) => {
+          if (isFunction(mixinstance[method])) {
+            functions.push(mixinstance[method].bind(mixinstance));
+          }
+          return functions;
+        };
+        /** @type {InstanceType<M>} */ (this)[method] = strategies[method].bind(
           this,
-          mixinstances.reduce((functions, mixinstance) => {
-            if (isFunction(mixinstance[method])) {
-              functions.push(mixinstance[method].bind(mixinstance));
-            }
-            return functions;
-          }, [])
+          mixinstances.reduce(reducer, [])
         );
         mixinstances.forEach((mixinstance) => {
-          mixinstance[method] = this[method];
+          mixinstance[method] = /** @type {InstanceType<M>} */ (this)[method];
         });
       });
     }
   }
 
   return function createMixinable(...args) {
-    return new Mixinable(...args);
+    // @ts-ignore
+    return /** @type {P} */ (new Mixinable(...args));
   };
-};
+}
+
+/**
+ * @type {DefineFunction}
+ */
+exports.define = define;
 
 // strategy exports
 
-exports.override = exports.callable = function override(functions, ...args) {
+/**
+ * @template {unknown[]} T
+ * @template U
+ * @param {Array<(...args: T) => U>} functions
+ * @param {T} args
+ * @returns {U | void}
+ */
+function override(functions, ...args) {
   const fn = functions.slice().pop();
   if (isFunction(fn)) {
     return fn(...args);
   }
-};
+}
 
-exports.parallel = function parallel(functions, ...args) {
+exports.override = override;
+exports.callable = override;
+
+/**
+ * @template {unknown[]} T
+ * @param {Array<(...args: T) => unknown>} functions
+ * @param {T} args
+ * @returns {unknown[] | Promise<unknown[]>}
+ */
+function parallel(functions, ...args) {
   const results = functions.map((fn) => {
     return fn(...args);
   });
   return results.find(isPromise) ? Promise.all(results) : results;
-};
+}
 
-exports.pipe = function pipe(functions, initial, ...args) {
+exports.parallel = parallel;
+
+/**
+ * @template {unknown[]} T
+ * @template R
+ * @param {Array<(a: R | Promise<R>, ...args: T) => R | Promise<R>>} functions
+ * @param {R | Promise<R>} initial
+ * @param {T} args
+ * @returns {R | Promise<R>}
+ */
+function pipe(functions, initial, ...args) {
   return functions.reduce((result, fn) => {
     if (isPromise(result)) {
       return result.then((result) => {
@@ -55,64 +178,68 @@ exports.pipe = function pipe(functions, initial, ...args) {
     }
     return fn(result, ...args);
   }, initial);
-};
+}
 
-exports.compose = function compose(functions, ...args) {
-  return exports.pipe(
+exports.pipe = pipe;
+
+/**
+ * @template {unknown[]} T
+ * @template R
+ * @param {Array<(a: R | Promise<R>, ...args: T) => R | Promise<R>>} functions
+ * @param {R | Promise<R>} initial
+ * @param {T} args
+ * @returns {R | Promise<R>}
+ */
+function compose(functions, initial, ...args) {
+  return pipe(
     functions.slice().reverse(),
+    initial,
     ...args
   );
-};
+}
+
+exports.compose = compose;
 
 exports.async = {
-  callable: function callableAsync(...args) {
-    return asynchronize(exports.override)(...args);
-  },
-  override: function overrideAsync(...args) {
-    return asynchronize(exports.override)(...args);
-  },
-  parallel: function parallelAsync(...args) {
-    return asynchronize(exports.parallel)(...args);
-  },
-  pipe: function pipeAsync(...args) {
-    return asynchronize(exports.pipe)(...args);
-  },
-  compose: function composeAsync(...args) {
-    return asynchronize(exports.compose)(...args);
-  },
+  callable: asynchronize(override),
+  override: asynchronize(override),
+  parallel: asynchronize(parallel),
+  pipe: asynchronize(pipe),
+  compose: asynchronize(compose),
 };
 
 exports.sync = {
-  callable: function callableSync(...args) {
-    return synchronize(exports.override)(...args);
-  },
-  override: function overrideSync(...args) {
-    return synchronize(exports.override)(...args);
-  },
-  sequence: function sequenceSync(...args) {
-    return synchronize(exports.parallel)(...args);
-  },
-  parallel: function parallelSync(...args) {
-    return synchronize(exports.parallel)(...args);
-  },
-  pipe: function pipeSync(...args) {
-    return synchronize(exports.pipe)(...args);
-  },
-  compose: function composeSync(...args) {
-    return synchronize(exports.compose)(...args);
-  },
+  callable: synchronize(override),
+  override: synchronize(override),
+  sequence: synchronize(parallel),
+  parallel: synchronize(parallel),
+  pipe: synchronize(pipe),
+  compose: synchronize(compose),
 };
 
 // utilities
 
+/**
+ * @param {any} obj
+ * @returns {obj is Function}
+ */
 function isFunction(obj) {
   return typeof obj === 'function';
 }
 
+/**
+ * @param {any} obj
+ * @returns {obj is Promise}
+ */
 function isPromise(obj) {
   return obj && isFunction(obj.then) && obj instanceof Promise;
 }
 
+/**
+ * @template {(...args: any[]) => any} T
+ * @param {T} fn
+ * @returns {(...args: Parameters<T>) => Promise<ReturnType<T>>}
+ */
 function asynchronize(fn) {
   return function asyncFn(...args) {
     const obj = fn(...args);
@@ -120,6 +247,11 @@ function asynchronize(fn) {
   };
 }
 
+/**
+ * @template {(...args: any[]) => any} T
+ * @param {T} fn
+ * @returns {(...args: Parameters<T>) => ReturnType<T> | never}
+ */
 function synchronize(fn) {
   return function syncFn(...args) {
     const obj = fn(...args);
