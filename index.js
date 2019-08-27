@@ -1,3 +1,4 @@
+// @ts-check
 'use strict';
 
 // main export
@@ -32,6 +33,9 @@ exports.define = function define(strategies = null, mixins) {
 
 // strategy exports
 
+/**
+ * @type {<T extends unknown[], U>(functions: Array<(...args: T) => U>, ...args: T) => U | void}
+ */
 exports.override = exports.callable = function override(functions, ...args) {
   var fn = functions.slice().pop();
   if (isFunction(fn)) {
@@ -39,6 +43,9 @@ exports.override = exports.callable = function override(functions, ...args) {
   }
 };
 
+/**
+ * @type {<T extends unknown[]>(functions: Array<(...args: T) => void>, ...args: T) => void[] | Promise<void[]>}
+ */
 exports.parallel = function parallel(functions, ...args) {
   var results = functions.map((fn) => {
     return fn(...args);
@@ -46,6 +53,9 @@ exports.parallel = function parallel(functions, ...args) {
   return results.find(isPromise) ? Promise.all(results) : results;
 };
 
+/**
+ * @type {<T extends any[], R>(functions: Array<(a: R | Promise<R>, ...args: T) => R | Promise<R>>, initial: R | Promise<R>, ...args: T) => R | Promise<R>}
+ */
 exports.pipe = function pipe(functions, initial, ...args) {
   return functions.reduce((result, fn) => {
     if (isPromise(result)) {
@@ -57,6 +67,9 @@ exports.pipe = function pipe(functions, initial, ...args) {
   }, initial);
 };
 
+/**
+ * @type {<T extends any[], R>(functions: Array<(a: R | Promise<R>, ...args: T) => R | Promise<R>>, initial: R | Promise<R>, ...args: T) => R | Promise<R>}
+ */
 exports.compose = function compose(functions, ...args) {
   return exports.pipe(
     functions.slice().reverse(),
@@ -105,14 +118,25 @@ exports.sync = {
 
 // utilities
 
+/**
+ * @param {any} obj
+ * @returns {obj is Function}
+ */
 function isFunction(obj) {
   return typeof obj === 'function';
 }
 
+/**
+ * @param {any} obj
+ * @returns {obj is Promise}
+ */
 function isPromise(obj) {
   return obj && isFunction(obj.then) && obj instanceof Promise;
 }
 
+/**
+ * @type {<T, U>(fn: (...args: T[]) => U | Promise<U>) => (...args: T[]) => Promise<U>}
+ */
 function asynchronize(fn) {
   return function asyncFn(...args) {
     var obj = fn(...args);
@@ -120,6 +144,9 @@ function asynchronize(fn) {
   };
 }
 
+/**
+ * @type {<T extends unknown[], U>(fn: (...args: T) => U) => (...args: T) => U | never}
+ */
 function synchronize(fn) {
   return function syncFn(...args) {
     var obj = fn(...args);
