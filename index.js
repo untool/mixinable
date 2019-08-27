@@ -3,119 +3,107 @@
 // main export
 
 module.exports = exports = function define(strategies, mixins) {
-  return function Mixinable() {
-    var args = argsToArray(arguments);
-    if (!(this instanceof Mixinable)) {
-      return new (bindArgs(Mixinable, args))();
+  class Mixinable {
+    constructor(...args) {
+      var mixinstances = (mixins || []).map((Mixin) => {
+        return new Mixin(...args);
+      });
+      Object.keys(strategies || {}).forEach((method) => {
+        this[method] = strategies[method].bind(
+          this,
+          mixinstances.reduce((functions, mixinstance) => {
+            if (isFunction(mixinstance[method])) {
+              functions.push(mixinstance[method].bind(mixinstance));
+            }
+            return functions;
+          }, [])
+        );
+        mixinstances.forEach((mixinstance) => {
+          mixinstance[method] = this[method];
+        });
+      });
     }
-    var mixinstances = (mixins || []).map(function(Mixin) {
-      return new (bindArgs(Mixin, args))();
-    });
-    Object.keys(strategies || {}).forEach(function(method) {
-      this[method] = strategies[method].bind(
-        this,
-        mixinstances.reduce(function(functions, mixinstance) {
-          if (isFunction(mixinstance[method])) {
-            functions.push(mixinstance[method].bind(mixinstance));
-          }
-          return functions;
-        }, [])
-      );
-      mixinstances.forEach(function(mixinstance) {
-        mixinstance[method] = this[method];
-      }, this);
-    }, this);
+  }
+
+  return function createMixinable(...args) {
+    return new Mixinable(...args);
   };
 };
 
 // strategy exports
 
-exports.override = exports.callable = function override(functions) {
-  var args = argsToArray(arguments).slice(1);
+exports.override = exports.callable = function override(functions, ...args) {
   var fn = functions.slice().pop();
   if (isFunction(fn)) {
-    return fn.apply(null, args);
+    return fn(...args);
   }
 };
 
-exports.parallel = function parallel(functions) {
-  var args = argsToArray(arguments).slice(1);
-  var results = functions.map(function(fn) {
-    return fn.apply(null, args);
+exports.parallel = function parallel(functions, ...args) {
+  var results = functions.map((fn) => {
+    return fn(...args);
   });
   return results.find(isPromise) ? Promise.all(results) : results;
 };
 
-exports.pipe = function pipe(functions) {
-  var args = argsToArray(arguments).slice(1);
-  return functions.reduce(function(result, fn) {
+exports.pipe = function pipe(functions, initial, ...args) {
+  return functions.reduce((result, fn) => {
     if (isPromise(result)) {
-      return result.then(function(result) {
-        return fn.apply(null, [result].concat(args));
+      return result.then((result) => {
+        return fn(result, ...args);
       });
     }
-    return fn.apply(null, [result].concat(args));
-  }, args.shift());
+    return fn(result, ...args);
+  }, initial);
 };
 
-exports.compose = function compose(functions) {
-  var args = argsToArray(arguments).slice(1);
-  var fn = exports.pipe.bind(null, functions.slice().reverse());
-  return fn.apply(null, args);
+exports.compose = function compose(functions, ...args) {
+  return exports.pipe(
+    functions.slice().reverse(),
+    ...args
+  );
 };
 
 exports.async = {
-  callable: function callableAsync() {
-    return asynchronize(exports.override).apply(null, arguments);
+  callable: function callableAsync(...args) {
+    return asynchronize(exports.override)(...args);
   },
-  override: function overrideAsync() {
-    return asynchronize(exports.override).apply(null, arguments);
+  override: function overrideAsync(...args) {
+    return asynchronize(exports.override)(...args);
   },
-  parallel: function parallelAsync() {
-    return asynchronize(exports.parallel).apply(null, arguments);
+  parallel: function parallelAsync(...args) {
+    return asynchronize(exports.parallel)(...args);
   },
-  pipe: function pipeAsync() {
-    return asynchronize(exports.pipe).apply(null, arguments);
+  pipe: function pipeAsync(...args) {
+    return asynchronize(exports.pipe)(...args);
   },
-  compose: function composeAsync() {
-    return asynchronize(exports.compose).apply(null, arguments);
+  compose: function composeAsync(...args) {
+    return asynchronize(exports.compose)(...args);
   },
 };
 
 exports.sync = {
-  callable: function callableSync() {
-    return synchronize(exports.override).apply(null, arguments);
+  callable: function callableSync(...args) {
+    return synchronize(exports.override)(...args);
   },
-  override: function overrideSync() {
-    return synchronize(exports.override).apply(null, arguments);
+  override: function overrideSync(...args) {
+    return synchronize(exports.override)(...args);
   },
-  sequence: function sequenceSync() {
-    return synchronize(exports.parallel).apply(null, arguments);
+  sequence: function sequenceSync(...args) {
+    return synchronize(exports.parallel)(...args);
   },
-  parallel: function parallelSync() {
-    return synchronize(exports.parallel).apply(null, arguments);
+  parallel: function parallelSync(...args) {
+    return synchronize(exports.parallel)(...args);
   },
-  pipe: function pipeSync() {
-    return synchronize(exports.pipe).apply(null, arguments);
+  pipe: function pipeSync(...args) {
+    return synchronize(exports.pipe)(...args);
   },
-  compose: function composeSync() {
-    return synchronize(exports.compose).apply(null, arguments);
+  compose: function composeSync(...args) {
+    return synchronize(exports.compose)(...args);
   },
 };
 
 // utilities
-
-var argsToArray = Function.prototype.apply.bind(function argsToArray() {
-  var args = new Array(arguments.length);
-  for (var i = 0; i < arguments.length; ++i) {
-    args[i] = arguments[i];
-  }
-  return args;
-}, null);
-
-function bindArgs(fn, args) {
-  return Function.prototype.bind.apply(fn, [null].concat(args));
-}
 
 function isFunction(obj) {
   return typeof obj === 'function';
@@ -126,15 +114,15 @@ function isPromise(obj) {
 }
 
 function asynchronize(fn) {
-  return function asyncFn() {
-    var obj = fn.apply(null, arguments);
+  return function asyncFn(...args) {
+    var obj = fn(...args);
     return isPromise(obj) ? obj : Promise.resolve(obj);
   };
 }
 
 function synchronize(fn) {
-  return function syncFn() {
-    var obj = fn.apply(null, arguments);
+  return function syncFn(...args) {
+    var obj = fn(...args);
     if (isPromise(obj)) {
       throw new Error('got promise in sync mode');
     }
