@@ -6,6 +6,7 @@ script:
   - commitlint-travis
   - yarn lint
   - yarn test
+  - yarn typecheck
 
 node_js:
   - 'node'
