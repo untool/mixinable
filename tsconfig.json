@@ -1,0 +1,15 @@
+{
+  "files": ["index.js"],
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "noEmit": true,
+    "allowJs": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true
+  }
+}

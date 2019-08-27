@@ -7,6 +7,7 @@
     "test": "ava --verbose",
     "lint": "eslint --ignore-path .gitignore '**/*.js'",
     "fmt": "prettier --write --ignore-path .gitignore '**/*.js'",
+    "typecheck": "tsc",
     "release": "standard-version",
     "update": "yarn upgrade-interactive --latest",
     "reset": "git clean -dfx && yarn",
@@ -37,7 +38,8 @@
     "husky": "^3.0.0",
     "lint-staged": "^9.0.0",
     "prettier": "^1.13.4",
-    "standard-version": "^7.0.0"
+    "standard-version": "^7.0.0",
+    "typescript": "^3.5.3"
   },
   "renovate": {
     "extends": [
