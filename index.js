@@ -5,7 +5,7 @@
 module.exports = exports = function define(strategies, mixins) {
   class Mixinable {
     constructor(...args) {
-      var mixinstances = (mixins || []).map((Mixin) => {
+      const mixinstances = (mixins || []).map((Mixin) => {
         return new Mixin(...args);
       });
       Object.keys(strategies || {}).forEach((method) => {
@@ -33,14 +33,14 @@ module.exports = exports = function define(strategies, mixins) {
 // strategy exports
 
 exports.override = exports.callable = function override(functions, ...args) {
-  var fn = functions.slice().pop();
+  const fn = functions.slice().pop();
   if (isFunction(fn)) {
     return fn(...args);
   }
 };
 
 exports.parallel = function parallel(functions, ...args) {
-  var results = functions.map((fn) => {
+  const results = functions.map((fn) => {
     return fn(...args);
   });
   return results.find(isPromise) ? Promise.all(results) : results;
@@ -115,14 +115,14 @@ function isPromise(obj) {
 
 function asynchronize(fn) {
   return function asyncFn(...args) {
-    var obj = fn(...args);
+    const obj = fn(...args);
     return isPromise(obj) ? obj : Promise.resolve(obj);
   };
 }
 
 function synchronize(fn) {
   return function syncFn(...args) {
-    var obj = fn(...args);
+    const obj = fn(...args);
     if (isPromise(obj)) {
       throw new Error('got promise in sync mode');
     }
