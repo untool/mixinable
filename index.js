@@ -2,7 +2,7 @@
 
 // main export
 
-module.exports = exports = function define(strategies, mixins) {
+exports.define = function define(strategies = null, mixins) {
   class Mixinable {
     constructor(...args) {
       const mixinstances = (mixins || []).map((Mixin) => {
