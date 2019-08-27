@@ -1,9 +1,8 @@
 {
-  "files": ["index.js"],
   "compilerOptions": {
+    "target": "es5",
     "moduleResolution": "node",
-    "noEmit": true,
-    "allowJs": true,
+    "declaration": true,
     "strict": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,

@@ -5,8 +5,8 @@ cache: yarn
 script:
   - commitlint-travis
   - yarn lint
+  - yarn build
   - yarn test
-  - yarn typecheck
 
 node_js:
   - 'node'

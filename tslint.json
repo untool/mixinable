@@ -1,0 +1,30 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint:recommended",
+    "tslint-plugin-prettier",
+    "tslint-config-prettier"
+  ],
+  "jsRules": {},
+  "rules": {
+    "prettier": true,
+    "typedef": [true, "property-declaration"],
+    "max-classes-per-file": false,
+    "interface-name": false,
+    "member-ordering": false,
+    "no-shadowed-variable": false,
+    "ordered-imports": [
+      true,
+      {
+        "import-sources-order": "case-insensitive",
+        "named-imports-order": "any"
+      }
+    ],
+    "object-literal-sort-keys": false,
+    "array-type": false
+  },
+  "rulesDirectory": [],
+  "linterOptions": {
+    "exclude": ["node_modules/**", ".git/**"]
+  }
+}

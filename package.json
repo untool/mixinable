@@ -4,15 +4,20 @@
   "description": "Functional JavaScript Mixin Utility",
   "main": "index.js",
   "scripts": {
+    "prepublishOnly": "yarn build",
     "test": "ava --verbose",
-    "lint": "eslint --ignore-path .gitignore '**/*.js'",
-    "fmt": "prettier --write --ignore-path .gitignore '**/*.js'",
-    "typecheck": "tsc",
+    "lint": "tslint '**/*.ts'",
+    "fmt": "prettier --write --ignore-path .gitignore '**/*.ts'",
+    "build": "tsc",
     "release": "standard-version",
     "update": "yarn upgrade-interactive --latest",
     "reset": "git clean -dfx && yarn",
     "postrelease": "git push --follow-tags; npm publish"
   },
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
@@ -30,15 +35,16 @@
     "@commitlint/cli": "^8.0.0",
     "@commitlint/config-conventional": "^8.0.0",
     "@commitlint/travis-cli": "^8.0.0",
-    "@untool/eslint-config": "^1.0.0",
     "@untool/prettier-config": "^1.0.0",
     "ava": "^2.0.0",
     "cz-conventional-changelog": "^3.0.0",
-    "eslint": "^6.0.0",
     "husky": "^3.0.0",
     "lint-staged": "^9.0.0",
     "prettier": "^1.13.4",
     "standard-version": "^7.0.0",
+    "tslint": "^5.19.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.0.1",
     "typescript": "^3.5.3"
   },
   "renovate": {
@@ -47,11 +53,8 @@
     ]
   },
   "prettier": "@untool/prettier-config",
-  "eslintConfig": {
-    "extends": "@untool/eslint-config"
-  },
   "lint-staged": {
-    "*.js": [
+    "*.ts": [
       "prettier --write",
       "git add"
     ]
