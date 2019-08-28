@@ -294,7 +294,7 @@ test('async parallel helper test', (t) => {
       }
     },
   ])();
-  const result = instance.foo(arg);
+  const result = /** @type {unknown} */ (instance.foo(arg));
   t.true(result instanceof Promise, 'received result is a promise');
   return /** @type {Promise<number[]>} */ (result).then((result) => {
     t.is(result.length, 3, 'promise resolves to array with correct length');

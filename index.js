@@ -147,17 +147,20 @@ exports.override = override;
 exports.callable = override;
 
 /**
- * @template {unknown[]} T
- * @param {Array<(...args: T) => unknown>} functions
- * @param {T} args
- * @returns {unknown[] | Promise<unknown[]>}
+ * @typedef {<T extends unknown[], U extends (...args: T) => Promise<any>>(functions: Array<U>, ...args: T) => Promise<Array<Unboxed<ReturnType<U>>>>} ParallelPromised
+ * @typedef {<T extends unknown[], U extends (...args: T) => any>(functions: Array<U>, ...args: T) => Array<ReturnType<U>>} ParallelScalar
+ * @type {ParallelPromised & ParallelScalar}
  */
-function parallel(functions, ...args) {
+const parallel = function parallel(
+  /** @type {Array<(...args: any[]) => Promise<any>> | Array<(...args: any[]) => any>} */ functions,
+  /** @type {unknown[]} */ ...args
+) {
+  // @ts-ignore
   const results = functions.map((fn) => {
     return fn(...args);
   });
   return results.find(isPromise) ? Promise.all(results) : results;
-}
+};
 
 exports.parallel = parallel;
 
