@@ -130,11 +130,11 @@ exports.define = define;
 // strategy exports
 
 /**
- * @template {unknown[]} T
+ * @template {Function} T
  * @template U
- * @param {Array<(...args: T) => U>} functions
- * @param {T} args
- * @returns {U | void}
+ * @param {Array<T>} functions
+ * @param {Array<U>} args
+ * @returns {ReturnType<T> | void}
  */
 function override(functions, ...args) {
   const fn = functions.slice().pop();
@@ -236,7 +236,7 @@ function isPromise(obj) {
 }
 
 /**
- * @template {(...args: any[]) => any} T
+ * @template {Function} T
  * @param {T} fn
  * @returns {(...args: Parameters<T>) => Promise<ReturnType<T>>}
  */
@@ -248,7 +248,7 @@ function asynchronize(fn) {
 }
 
 /**
- * @template {(...args: any[]) => any} T
+ * @template {Function} T
  * @param {T} fn
  * @returns {(...args: Parameters<T>) => ReturnType<T> | never}
  */
