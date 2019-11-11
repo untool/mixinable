@@ -58,10 +58,7 @@ exports.pipe = function pipe(functions, initial, ...args) {
 };
 
 exports.compose = function compose(functions, ...args) {
-  return exports.pipe(
-    functions.slice().reverse(),
-    ...args
-  );
+  return exports.pipe(functions.slice().reverse(), ...args);
 };
 
 exports.async = {
