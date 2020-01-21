@@ -597,27 +597,27 @@ test('sync helper test', function(t) {
   )();
   t.throws(
     instance.foo.bind(instance),
-    'got promise in sync mode',
+    { message: 'got promise in sync mode' },
     'override throws if result is a promise'
   );
   t.throws(
     instance.bar.bind(instance),
-    'got promise in sync mode',
+    { message: 'got promise in sync mode' },
     'parallel throws if result is a promise'
   );
   t.throws(
     instance.baz.bind(instance),
-    'got promise in sync mode',
+    { message: 'got promise in sync mode' },
     'pipe throws if result is a promise'
   );
   t.throws(
     instance.qux.bind(instance),
-    'got promise in sync mode',
+    { message: 'got promise in sync mode' },
     'sequence throws if result is a promise'
   );
   t.throws(
     instance.quz.bind(instance),
-    'got promise in sync mode',
+    { message: 'got promise in sync mode' },
     'compose throws if result is a promise'
   );
 });
