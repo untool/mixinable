@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.0.1](https://github.com/untool/mixinable/compare/v5.0.0...v5.0.1) (2020-04-24)
+
+
+### Bug Fixes
+
+* remove usage of exports ([1b5cc14](https://github.com/untool/mixinable/commit/1b5cc14d9405506d3494aba960bb1a5ffaf89824))
+
 ## [5.0.0](https://github.com/untool/mixinable/compare/v4.0.0...v5.0.0) (2020-04-24)
 
 
