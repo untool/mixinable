@@ -53,7 +53,10 @@
   },
   "prettier": "@untool/prettier-config",
   "eslintConfig": {
-    "extends": "@untool/eslint-config"
+    "extends": "@untool/eslint-config",
+    "env": {
+      "node": false
+    }
   },
   "lint-staged": {
     "*.js": [
