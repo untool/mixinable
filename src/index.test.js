@@ -1,7 +1,5 @@
-'use strict';
-
-var test = require('ava');
-var mixinable = require('./index');
+import test from 'ava';
+import * as mixinable from './index';
 
 var async = mixinable.async;
 var sync = mixinable.sync;
