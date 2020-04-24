@@ -8,7 +8,7 @@ var sync = mixinable.sync;
 
 test('exports test', function(t) {
   t.plan(17);
-  t.is(typeof mixinable, 'function', 'main export is a function');
+  t.is(typeof mixinable.define, 'function', 'main export is a function');
   t.is(typeof mixinable.callable, 'function', 'callable is a function');
   t.is(typeof mixinable.override, 'function', 'override is a function');
   t.is(typeof mixinable.parallel, 'function', 'parallel is a function');
@@ -29,7 +29,7 @@ test('exports test', function(t) {
 
 test('basic function test', function(t) {
   t.plan(2);
-  var create = mixinable();
+  var create = mixinable.define();
   t.is(typeof create, 'function', 'mixinable creates a create function');
   var result = create();
   t.truthy(result, 'create returns something');
@@ -38,7 +38,7 @@ test('basic function test', function(t) {
 test('constructor support test', function(t) {
   t.plan(3);
   var arg = 1;
-  mixinable({}, [
+  mixinable.define({}, [
     function(_arg) {
       t.is(_arg, arg, '1st implementation receives correct arg');
     },
@@ -77,14 +77,16 @@ test('inheritance test', function(t) {
       );
     },
   };
-  var instance = mixinable({ foo: mixinable.override }, [Implementation])(arg);
+  var instance = mixinable.define({ foo: mixinable.override }, [
+    Implementation,
+  ])(arg);
   instance.foo(arg);
 });
 
 test('callable helper test', function(t) {
   t.plan(2);
   var arg = 1;
-  var instance = mixinable(
+  var instance = mixinable.define(
     {
       foo: mixinable.callable,
     },
@@ -119,7 +121,7 @@ test('callable helper test', function(t) {
 test('override helper test', function(t) {
   t.plan(2);
   var arg = 1;
-  var instance = mixinable(
+  var instance = mixinable.define(
     {
       foo: mixinable.override,
     },
@@ -155,7 +157,7 @@ test('sync parallel helper test', function(t) {
   t.plan(9);
   var arg = 1;
   var ctr = 0;
-  var instance = mixinable(
+  var instance = mixinable.define(
     {
       foo: mixinable.parallel,
     },
@@ -208,7 +210,7 @@ test('async parallel helper test', function(t) {
   t.plan(14);
   var arg = 1;
   var ctr = 0;
-  var instance = mixinable(
+  var instance = mixinable.define(
     {
       foo: mixinable.parallel,
     },
@@ -288,7 +290,7 @@ test('async parallel helper test', function(t) {
 test('sync pipe helper test', function(t) {
   t.plan(10);
   var arg = 1;
-  var instance = mixinable(
+  var instance = mixinable.define(
     {
       foo: mixinable.pipe,
     },
@@ -340,7 +342,7 @@ test('sync pipe helper test', function(t) {
 test('async pipe helper test', function(t) {
   t.plan(11);
   var arg = 1;
-  var instance = mixinable(
+  var instance = mixinable.define(
     {
       foo: mixinable.pipe,
     },
@@ -414,7 +416,7 @@ test('async pipe helper test', function(t) {
 test('sync compose helper test', function(t) {
   t.plan(10);
   var arg = 1;
-  var instance = mixinable(
+  var instance = mixinable.define(
     {
       foo: mixinable.compose,
     },
@@ -466,7 +468,7 @@ test('sync compose helper test', function(t) {
 test('async compose helper test', function(t) {
   t.plan(11);
   var arg = 1;
-  var instance = mixinable(
+  var instance = mixinable.define(
     {
       foo: mixinable.compose,
     },
@@ -539,7 +541,7 @@ test('async compose helper test', function(t) {
 
 test('async helper test', function(t) {
   t.plan(4);
-  var instance = mixinable(
+  var instance = mixinable.define(
     {
       foo: async.override,
       bar: async.parallel,
@@ -565,7 +567,7 @@ test('async helper test', function(t) {
 
 test('sync helper test', function(t) {
   t.plan(5);
-  var instance = mixinable(
+  var instance = mixinable.define(
     {
       foo: sync.override,
       bar: sync.parallel,
@@ -624,7 +626,7 @@ test('sync helper test', function(t) {
 
 test('internal mixin method test', function(t) {
   t.plan(2);
-  var create = mixinable(
+  var create = mixinable.define(
     {
       foo: mixinable.override,
       bar: mixinable.override,
@@ -652,7 +654,7 @@ test('internal mixin method test', function(t) {
 
 test('autobinding test', function(t) {
   return new Promise(function(resolve) {
-    var create = mixinable(
+    var create = mixinable.define(
       {
         foo: mixinable.override,
         bar: mixinable.override,

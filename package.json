@@ -2,15 +2,20 @@
   "name": "mixinable",
   "version": "4.0.0",
   "description": "Functional JavaScript Mixin Utility",
-  "main": "index.js",
+  "source": "src/index.js",
+  "main": "dist/index.js",
+  "umd:main": "dist/index.umd.js",
+  "module": "dist/index.mjs",
   "scripts": {
+    "build": "microbundle build",
     "test": "ava --verbose",
     "lint": "eslint --ignore-path .gitignore '**/*.js'",
     "fmt": "prettier --write --ignore-path .gitignore '**/*.js'",
+    "prerelease": "yarn build",
     "release": "standard-version",
     "update": "yarn upgrade-interactive --latest",
     "reset": "git clean -dfx && yarn",
-    "postrelease": "git push --follow-tags; npm publish"
+    "postrelease": "git push --follow-tags && npm publish"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
@@ -34,8 +39,10 @@
     "ava": "^3.0.0",
     "cz-conventional-changelog": "^3.0.0",
     "eslint": "^6.0.0",
+    "esm": "^3.2.25",
     "husky": "^4.0.0",
     "lint-staged": "^10.0.0",
+    "microbundle": "^0.11.0",
     "prettier": "^1.13.4",
     "standard-version": "^7.0.0"
   },
@@ -74,5 +81,10 @@
       "commit-msg": "commitlint -e $GIT_PARAMS",
       "pre-commit": "lint-staged"
     }
+  },
+  "ava": {
+    "require": [
+      "esm"
+    ]
   }
 }
