@@ -1,6 +1,20 @@
-# Change Log
+# Changelog
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+## [5.0.0](https://github.com/untool/mixinable/compare/v4.0.0...v5.0.0) (2020-04-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* Replace default export with named export
+
+### Bug Fixes
+
+* correct lint-staged configuration ([d4bf275](https://github.com/untool/mixinable/commit/d4bf275fa0da804baf4c770aabcc6b192496110c))
+
+
+* rewrite mixinable using esm ([69261c5](https://github.com/untool/mixinable/commit/69261c52efa9a8870d4d5ed82e0709f4cd3faa9d))
 
 <a name="4.0.0"></a>
 # [4.0.0](https://github.com/untool/mixinable/compare/v3.1.2...v4.0.0) (2018-08-17)
