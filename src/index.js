@@ -1,8 +1,4 @@
-'use strict';
-
-// main export
-
-module.exports = exports = function define(strategies, mixins) {
+export function define(strategies, mixins) {
   class Mixinable {
     constructor(...args) {
       var mixinstances = (mixins || []).map((Mixin) => {
@@ -28,25 +24,25 @@ module.exports = exports = function define(strategies, mixins) {
   return function createMixinable(...args) {
     return new Mixinable(...args);
   };
-};
+}
 
-// strategy exports
-
-exports.override = exports.callable = function override(functions, ...args) {
+export function override(functions, ...args) {
   var fn = functions.slice().pop();
   if (isFunction(fn)) {
     return fn(...args);
   }
-};
+}
 
-exports.parallel = function parallel(functions, ...args) {
+export { override as callable };
+
+export function parallel(functions, ...args) {
   var results = functions.map((fn) => {
     return fn(...args);
   });
   return results.find(isPromise) ? Promise.all(results) : results;
-};
+}
 
-exports.pipe = function pipe(functions, initial, ...args) {
+export function pipe(functions, initial, ...args) {
   return functions.reduce((result, fn) => {
     if (isPromise(result)) {
       return result.then((result) => {
@@ -55,13 +51,13 @@ exports.pipe = function pipe(functions, initial, ...args) {
     }
     return fn(result, ...args);
   }, initial);
-};
+}
 
-exports.compose = function compose(functions, ...args) {
+export function compose(functions, ...args) {
   return exports.pipe(functions.slice().reverse(), ...args);
-};
+}
 
-exports.async = {
+export const async = {
   callable: function callableAsync(...args) {
     return asynchronize(exports.override)(...args);
   },
@@ -79,7 +75,7 @@ exports.async = {
   },
 };
 
-exports.sync = {
+export const sync = {
   callable: function callableSync(...args) {
     return synchronize(exports.override)(...args);
   },
