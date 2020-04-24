@@ -54,45 +54,45 @@ export function pipe(functions, initial, ...args) {
 }
 
 export function compose(functions, ...args) {
-  return exports.pipe(functions.slice().reverse(), ...args);
+  return pipe(functions.slice().reverse(), ...args);
 }
 
 export const async = {
   callable: function callableAsync(...args) {
-    return asynchronize(exports.override)(...args);
+    return asynchronize(override)(...args);
   },
   override: function overrideAsync(...args) {
-    return asynchronize(exports.override)(...args);
+    return asynchronize(override)(...args);
   },
   parallel: function parallelAsync(...args) {
-    return asynchronize(exports.parallel)(...args);
+    return asynchronize(parallel)(...args);
   },
   pipe: function pipeAsync(...args) {
-    return asynchronize(exports.pipe)(...args);
+    return asynchronize(pipe)(...args);
   },
   compose: function composeAsync(...args) {
-    return asynchronize(exports.compose)(...args);
+    return asynchronize(compose)(...args);
   },
 };
 
 export const sync = {
   callable: function callableSync(...args) {
-    return synchronize(exports.override)(...args);
+    return synchronize(override)(...args);
   },
   override: function overrideSync(...args) {
-    return synchronize(exports.override)(...args);
+    return synchronize(override)(...args);
   },
   sequence: function sequenceSync(...args) {
-    return synchronize(exports.parallel)(...args);
+    return synchronize(parallel)(...args);
   },
   parallel: function parallelSync(...args) {
-    return synchronize(exports.parallel)(...args);
+    return synchronize(parallel)(...args);
   },
   pipe: function pipeSync(...args) {
-    return synchronize(exports.pipe)(...args);
+    return synchronize(pipe)(...args);
   },
   compose: function composeSync(...args) {
-    return synchronize(exports.compose)(...args);
+    return synchronize(compose)(...args);
   },
 };
 

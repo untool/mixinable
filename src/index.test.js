@@ -1,3 +1,4 @@
+/* global setTimeout */
 import test from 'ava';
 import * as mixinable from './index';
 
