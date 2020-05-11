@@ -1,6 +1,6 @@
 {
   "name": "mixinable",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "Functional JavaScript Mixin Utility",
   "source": "src/index.js",
   "main": "dist/index.js",
