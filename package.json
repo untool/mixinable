@@ -31,9 +31,9 @@
   },
   "homepage": "https://github.com/untool/mixinable#readme",
   "devDependencies": {
-    "@commitlint/cli": "^8.0.0",
-    "@commitlint/config-conventional": "^8.0.0",
-    "@commitlint/travis-cli": "^8.0.0",
+    "@commitlint/cli": "^9.0.0",
+    "@commitlint/config-conventional": "^9.0.0",
+    "@commitlint/travis-cli": "^9.0.0",
     "@untool/eslint-config": "^1.0.0",
     "@untool/prettier-config": "^1.0.0",
     "ava": "^3.0.0",
